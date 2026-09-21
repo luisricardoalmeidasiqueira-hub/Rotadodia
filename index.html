@@ -149,10 +149,11 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:16px 5px 24px
   <div class="actions">
     <button class="btn-primary full" id="abrirGoogle">🗺️ Abrir rota no Google Maps</button>
     <button class="btn-secondary full" id="compartilhar">📤 Compartilhar rota</button>
+  <button class="btn-secondary full" id="compartilharApp">📲 Compartilhar aplicativo</button>
   </div>
 </div>
 
-<footer>Criado por Luis Ricardo</footer>
+<footer>© 2026 Luís Ricardo de Almeida Siqueira — Todos os direitos reservados.</footer>
 </div>
 
 <button class="theme" id="tema">🌙</button>
@@ -502,6 +503,20 @@ document.getElementById("compartilhar").onclick=async()=>{
   const texto=`🚗 Rota do Dia — Faturamento\n\n📅 Data: ${dataRotaEl.value}\n📍 Cidade/região: ${cidadeEl.value||"Não informada"}\n\n${currentStops.map((s,i)=>`${i+1}. ${s.nome}`).join("\n")}\n\n🗺️ Abrir rota no Google Maps:\n${googleUrl}`;
   if(navigator.share){try{await navigator.share({title:"Rota do Dia — Faturamento",text:texto});return}catch(e){if(e.name==="AbortError")return}}
   window.open("https://wa.me/?text="+encodeURIComponent(texto),"_blank");
+};
+
+/* COMPARTILHAR APLICATIVO */
+document.getElementById("compartilharApp").onclick=async()=>{
+  const appUrl=window.location.href;
+  const texto="📍 Rota do Dia — Faturamento\n\nCompartilhe este aplicativo para acessar o Rota do Dia.";
+  if(navigator.share){
+    try{
+      await navigator.share({title:"Rota do Dia — Faturamento",text:texto,url:appUrl});
+      return;
+    }catch(e){if(e.name==="AbortError")return}
+  }
+  const whatsapp="https://wa.me/?text="+encodeURIComponent(texto+"\n"+appUrl);
+  window.open(whatsapp,"_blank");
 };
 
 carregarUltimaRota();
