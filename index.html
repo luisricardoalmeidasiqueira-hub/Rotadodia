@@ -58,8 +58,11 @@ button:disabled{opacity:.55;cursor:not-allowed}
 #resultado{display:none}
 .result-head{display:flex;justify-content:space-between;align-items:center}
 .timestamp{color:var(--muted);font-size:11px}
+.aviso-gps{display:none;background:#fff4e5;color:#8a4b00;border:1px solid #f3d19e;border-radius:10px;padding:9px;margin-top:8px;font-size:12px;line-height:1.4}
+body.dark .aviso-gps{background:#3a2a12;color:#ffd9a3;border-color:#6b4a1c}
 .stop{display:flex;align-items:center;gap:9px;border:1px solid var(--border);border-radius:12px;padding:9px;margin-top:8px}
 .stop-number{width:30px;height:30px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:bold;flex:none}
+.stop-number.start{background:#d97706}
 .stop-info{flex:1;min-width:0}.stop-name{font-size:14px;font-weight:bold;word-break:break-word}
 .stop-coords{font-size:10px;color:var(--muted);margin-top:2px}
 .stop-controls{display:flex;flex-direction:column;gap:3px}
@@ -84,7 +87,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:16px 5px 24px
 <link rel="icon" type="image/png" sizes="512x512" href="app-icon.png">
 <link rel="apple-touch-icon" sizes="512x512" href="app-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#0b2d5c">
+<meta name="theme-color" content="#126b3a">
 
 </head>
 
@@ -110,9 +113,9 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:16px 5px 24px
     <li>Para apagar uma rua favorita, toque na <b>🗑️ lixeira</b> que aparece ao lado do nome dela.</li>
     <li>Use <b>📍 Preencher ruas de um bairro inteiro</b> se quiser buscar automaticamente as ruas de um bairro.</li>
     <li>Se quiser guardar uma lista inteira de ruas, use <b>💾 Salvar esta lista como etapa</b>.</li>
-    <li>Deixe <b>Usar minha localização atual como ponto de partida</b> marcado para começar a rota a partir de onde você está.</li>
+    <li>Deixe <b>Usar minha localização atual como ponto de partida</b> marcado para começar a rota a partir de onde você está. Se o aparelho não liberar a localização, o aplicativo avisa e pergunta se deseja continuar pela primeira rua.</li>
     <li>Toque em <b>🚗 Calcular melhor rota</b>. O aplicativo organiza os pontos por proximidade.</li>
-    <li>Depois do cálculo, use as setas <b>▲ ▼</b> para mudar manualmente a ordem.</li>
+    <li>Depois do cálculo, use as setas <b>▲ ▼</b> para mudar manualmente a ordem. O ponto de partida pelo GPS fica fixo no topo.</li>
     <li>Quando estiver tudo certo, use <b>🗺️ Abrir rota no Google Maps</b> para navegar ou <b>📤 Compartilhar rota</b> para enviar a rota.</li>
   </ol>
   <div class="help-tip">
@@ -170,6 +173,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:16px 5px 24px
       <div class="timestamp" id="timestamp"></div>
     </div>
   </div>
+  <div class="aviso-gps" id="avisoGps"></div>
   <div id="stopsList"></div>
 </div>
 
@@ -213,6 +217,7 @@ const ruasSalvasEl=document.getElementById("ruasSalvas");
 const etapasSalvasEl=document.getElementById("etapasSalvas");
 const usarGpsEl=document.getElementById("usarGps");
 const mapStatusEl=document.getElementById("mapStatus");
+const avisoGpsEl=document.getElementById("avisoGps");
 
 let currentStops=[];
 let map=null;
@@ -225,7 +230,7 @@ function hojeISO(){
 dataRotaEl.value=hojeISO();
 
 function escapeHtml(v){
-  return String(v||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+  return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
 }
 
 /* COMO USAR */
@@ -236,9 +241,7 @@ document.getElementById("comoUsar").onclick=()=>{
   if(aberto)setTimeout(()=>ajuda.scrollIntoView({behavior:"smooth",block:"start"}),50);
 };
 
-/* ATUALIZAR APLICATIVO
-   Usa um parâmetro de versão para forçar o navegador a carregar
-   novamente o index publicado, sem apagar os dados do localStorage. */
+/* ATUALIZAR APLICATIVO */
 document.getElementById("atualizarApp").onclick=()=>{
   const confirmar=confirm("Atualizar o aplicativo agora?\n\nSe houver uma versão nova publicada, ela será carregada. Seus favoritos, cidades e etapas salvas permanecem no aparelho.");
   if(!confirmar)return;
@@ -261,18 +264,16 @@ document.getElementById("tema").onclick=()=>{
 aplicarTema();
 
 /* CIDADES */
-function getCidades(){return JSON.parse(localStorage.getItem("cidades-rota")||"[]")}
+function getCidades(){try{return JSON.parse(localStorage.getItem("cidades-rota")||"[]")}catch(e){return[]}}
 function renderCidades(){
   cidadesSalvasEl.innerHTML="";
   getCidades().forEach((cidade,index)=>{
     const wrap=document.createElement("div");
     wrap.className="chip-wrap";
-
     const b=document.createElement("button");
     b.className="chip";
     b.textContent="★ "+cidade;
     b.onclick=()=>cidadeEl.value=cidade;
-
     const del=document.createElement("button");
     del.className="chip-delete";
     del.type="button";
@@ -286,7 +287,6 @@ function renderCidades(){
         renderCidades();
       }
     };
-
     wrap.appendChild(b);
     wrap.appendChild(del);
     cidadesSalvasEl.appendChild(wrap);
@@ -300,17 +300,46 @@ document.getElementById("salvarCidade").onclick=()=>{
 };
 renderCidades();
 
+/* ==========================================================
+   GPS
+   Tenta primeiro com alta precisão; se der tempo esgotado ou
+   sinal indisponível, tenta de novo com precisão normal.
+   Retorna {ok:true,lat,lon} ou {ok:false,code}.
+   ========================================================== */
+function pedirPosicao(opcoes){
+  return new Promise(resolve=>{
+    navigator.geolocation.getCurrentPosition(
+      p=>resolve({ok:true,lat:p.coords.latitude,lon:p.coords.longitude,precisao:p.coords.accuracy}),
+      e=>resolve({ok:false,code:e.code}),
+      opcoes
+    );
+  });
+}
+async function obterGPS(){
+  if(!navigator.geolocation)return {ok:false,code:0};
+  let r=await pedirPosicao({enableHighAccuracy:true,timeout:15000,maximumAge:30000});
+  if(!r.ok&&r.code!==1){
+    r=await pedirPosicao({enableHighAccuracy:false,timeout:15000,maximumAge:120000});
+  }
+  return r;
+}
+function mensagemErroGPS(code){
+  if(code===1)return "A permissão de localização está bloqueada para este aplicativo.\n\nNo iPhone: Ajustes > Privacidade e Segurança > Serviços de Localização > Safari (ou Sites do Safari) > \"Ao Usar o App\" e ative \"Localização Precisa\". Depois abra o aplicativo de novo e permita quando ele perguntar.";
+  if(code===2)return "O aparelho não conseguiu determinar a posição agora (sinal fraco ou GPS desligado). Verifique se os Serviços de Localização estão ligados.";
+  if(code===3)return "A localização demorou demais para responder. Tente novamente em local aberto.";
+  return "Este navegador não disponibiliza a localização.";
+}
+
 /* GPS CIDADE */
-document.getElementById("gpsCidade").onclick=()=>{
-  if(!navigator.geolocation)return alert("Seu dispositivo não disponibilizou GPS.");
-  navigator.geolocation.getCurrentPosition(async p=>{
-    try{
-      const u=`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${p.coords.latitude}&lon=${p.coords.longitude}&accept-language=pt-BR`;
-      const r=await fetch(u);const d=await r.json();const a=d.address||{};
-      cidadeEl.value=a.city||a.town||a.municipality||a.village||a.county||"";
-      if(!cidadeEl.value)alert("Não foi possível identificar a cidade.");
-    }catch(e){alert("Não foi possível consultar sua localização.")}
-  },()=>alert("Não foi possível obter sua localização."),{enableHighAccuracy:true,timeout:10000});
+document.getElementById("gpsCidade").onclick=async()=>{
+  const g=await obterGPS();
+  if(!g.ok)return alert(mensagemErroGPS(g.code));
+  try{
+    const u=`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${g.lat}&lon=${g.lon}&accept-language=pt-BR`;
+    const r=await fetch(u);const d=await r.json();const a=d.address||{};
+    cidadeEl.value=a.city||a.town||a.municipality||a.village||a.county||"";
+    if(!cidadeEl.value)alert("Não foi possível identificar a cidade.");
+  }catch(e){alert("Não foi possível consultar sua localização.")}
 };
 
 /* RUAS */
@@ -327,8 +356,8 @@ function criarRua(nome="",ni="",nf=""){
       </div>
     </div>
     <div class="street-bottom">
-      <input class="numero-inicial" type="number" placeholder="Nº inicial" value="${escapeHtml(ni)}">
-      <input class="numero-final" type="number" placeholder="Nº final" value="${escapeHtml(nf)}">
+      <input class="numero-inicial" type="number" inputmode="numeric" placeholder="Nº inicial" value="${escapeHtml(ni)}">
+      <input class="numero-final" type="number" inputmode="numeric" placeholder="Nº final" value="${escapeHtml(nf)}">
     </div>`;
   div.querySelector(".remover-rua").onclick=()=>{div.remove();renumerarRuas()};
   div.querySelector(".salvar-rua").onclick=()=>{
@@ -340,11 +369,18 @@ function criarRua(nome="",ni="",nf=""){
 function renumerarRuas(){
   [...ruasEl.children].forEach((d,i)=>d.querySelector(".street-number").textContent=i+1);
 }
+function lerRuasDaTela(){
+  return [...ruasEl.querySelectorAll(".street")].map(d=>({
+    nome:d.querySelector(".street-name").value.trim(),
+    ni:d.querySelector(".numero-inicial").value.trim(),
+    nf:d.querySelector(".numero-final").value.trim()
+  })).filter(x=>x.nome);
+}
 document.getElementById("adicionarRua").onclick=()=>criarRua();
 criarRua();
 
 /* RUAS SALVAS / FAVORITAS */
-function getRuas(){return JSON.parse(localStorage.getItem("ruas-rota")||"[]")}
+function getRuas(){try{return JSON.parse(localStorage.getItem("ruas-rota")||"[]")}catch(e){return[]}}
 function salvarRua(nome){
   const a=getRuas();if(!a.includes(nome))a.push(nome);
   localStorage.setItem("ruas-rota",JSON.stringify(a));renderRuasSalvas();
@@ -354,13 +390,11 @@ function renderRuasSalvas(){
   getRuas().forEach((nome,index)=>{
     const wrap=document.createElement("div");
     wrap.className="chip-wrap";
-
     const b=document.createElement("button");
     b.className="chip";
     b.textContent="★ "+nome;
     b.title="Adicionar esta rua à rota";
     b.onclick=()=>criarRua(nome);
-
     const del=document.createElement("button");
     del.className="chip-delete";
     del.type="button";
@@ -374,7 +408,6 @@ function renderRuasSalvas(){
         renderRuasSalvas();
       }
     };
-
     wrap.appendChild(b);
     wrap.appendChild(del);
     ruasSalvasEl.appendChild(wrap);
@@ -404,19 +437,22 @@ document.getElementById("bairroInteiro").onclick=async()=>{
   finally{botao.disabled=false;botao.textContent="📍 Preencher ruas de um bairro inteiro";}
 };
 
-/* ETAPAS */
-function getEtapas(){return JSON.parse(localStorage.getItem("etapas-rota")||"[]")}
+/* ETAPAS (agora guardam também Nº inicial e Nº final) */
+function getEtapas(){try{return JSON.parse(localStorage.getItem("etapas-rota")||"[]")}catch(e){return[]}}
 function renderEtapas(){
   etapasSalvasEl.innerHTML="";
   getEtapas().forEach((etapa,index)=>{
     const wrap=document.createElement("div");
     wrap.className="chip-wrap";
-
     const b=document.createElement("button");
     b.className="chip";
     b.textContent="📁 "+etapa.nome;
-    b.onclick=()=>{cidadeEl.value=etapa.cidade||"";ruasEl.innerHTML="";(etapa.ruas||[]).forEach(n=>criarRua(n));};
-
+    b.onclick=()=>{
+      cidadeEl.value=etapa.cidade||"";
+      ruasEl.innerHTML="";
+      (etapa.ruas||[]).forEach(r=>typeof r==="string"?criarRua(r):criarRua(r.nome,r.ni||"",r.nf||""));
+      if(!ruasEl.children.length)criarRua();
+    };
     const del=document.createElement("button");
     del.className="chip-delete";
     del.type="button";
@@ -430,31 +466,57 @@ function renderEtapas(){
         renderEtapas();
       }
     };
-
     wrap.appendChild(b);
     wrap.appendChild(del);
     etapasSalvasEl.appendChild(wrap);
   });
 }
 document.getElementById("salvarEtapa").onclick=()=>{
-  const nome=prompt("Digite um nome para esta etapa:");if(!nome)return;
-  const ruas=[...document.querySelectorAll(".street-name")].map(x=>x.value.trim()).filter(Boolean);
+  const ruas=lerRuasDaTela();
   if(!ruas.length)return alert("Adicione pelo menos uma rua.");
+  const nome=prompt("Digite um nome para esta etapa:");if(!nome)return;
   const a=getEtapas();a.push({nome,cidade:cidadeEl.value.trim(),ruas});
   localStorage.setItem("etapas-rota",JSON.stringify(a));renderEtapas();alert("Etapa salva.");
 };
 renderEtapas();
 
-/* GEOCODIFICAÇÃO */
+/* ==========================================================
+   GEOCODIFICAÇÃO
+   Com número: busca estruturada (rua + número + cidade).
+   Se não achar, busca só pelo nome da rua na cidade.
+   ========================================================== */
 const esperar=ms=>new Promise(r=>setTimeout(r,ms));
+async function nominatim(params){
+  const u=new URL("https://nominatim.openstreetmap.org/search");
+  const p={format:"jsonv2",limit:"1",countrycodes:"br","accept-language":"pt-BR"};
+  Object.entries(params).forEach(([k,v])=>{if(v)p[k]=v});
+  u.search=new URLSearchParams(p).toString();
+  const r=await fetch(u);
+  if(!r.ok)return null;
+  const d=await r.json();
+  return d.length?{lat:+d[0].lat,lon:+d[0].lon}:null;
+}
+function rotuloRua(nome,ni,nf){
+  if(ni&&nf)return `${nome} (nº ${ni} a ${nf})`;
+  if(ni)return `${nome}, ${ni}`;
+  return nome;
+}
 async function geocodificarRua(nome,cidade,ni,nf){
   const m=nome.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
   if(m)return {nome,lat:+m[1],lon:+m[2]};
-  let q=nome.trim();if(ni&&nf)q+=` ${ni}-${nf}`;else if(ni)q+=` ${ni}`;
-  if(cidade)q+=`, ${cidade}`;q+=", Brasil";
-  const r=await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=br&q=${encodeURIComponent(q)}`);
-  const d=await r.json();if(!d.length)return null;
-  return {nome,lat:+d[0].lat,lon:+d[0].lon};
+  let p=null;
+  if(ni){
+    p=await nominatim({street:`${ni} ${nome}`,city:cidade,country:"Brasil"});
+    if(!p)await esperar(1100);
+  }
+  if(!p){
+    let q=nome.trim();
+    if(cidade)q+=`, ${cidade}`;
+    q+=", Brasil";
+    p=await nominatim({q});
+  }
+  if(!p)return null;
+  return {nome:rotuloRua(nome,ni,nf),lat:p.lat,lon:p.lon};
 }
 function haversine(a,b){
   const R=6371,la1=a.lat*Math.PI/180,la2=b.lat*Math.PI/180,dla=(b.lat-a.lat)*Math.PI/180,dlo=(b.lon-a.lon)*Math.PI/180;
@@ -470,32 +532,46 @@ function nearestNeighborOrder(points,start){
   }
   return out;
 }
-function obterGPS(){
-  return new Promise(resolve=>{
-    if(!navigator.geolocation)return resolve(null);
-    navigator.geolocation.getCurrentPosition(p=>resolve({lat:p.coords.latitude,lon:p.coords.longitude,nome:"Minha localização"}),()=>resolve(null),{enableHighAccuracy:true,timeout:10000,maximumAge:60000});
-  });
-}
 
-/* CALCULAR */
+/* ==========================================================
+   CALCULAR
+   O GPS é pedido logo no toque do botão (junto com a busca
+   das ruas). Se falhar, o app AVISA e pergunta antes de usar
+   a primeira rua como ponto de partida.
+   ========================================================== */
 document.getElementById("calcular").onclick=async()=>{
-  const linhas=[...document.querySelectorAll(".street")];
+  const entradas=lerRuasDaTela();
   const cidade=cidadeEl.value.trim();
-  const entradas=linhas.map(d=>({nome:d.querySelector(".street-name").value.trim(),ni:d.querySelector(".numero-inicial").value.trim(),nf:d.querySelector(".numero-final").value.trim()})).filter(x=>x.nome);
   if(!entradas.length)return alert("Adicione pelo menos uma rua.");
+  const querGps=usarGpsEl.checked;
+  const gpsPromise=querGps?obterGPS():Promise.resolve(null);
   const botao=document.getElementById("calcular");botao.disabled=true;
   try{
-    const pontos=[];
+    const pontos=[],naoEncontradas=[];
     for(let i=0;i<entradas.length;i++){
       botao.textContent=`🔎 Localizando ${i+1}/${entradas.length}...`;
-      try{const p=await geocodificarRua(entradas[i].nome,cidade,entradas[i].ni,entradas[i].nf);if(p)pontos.push(p)}catch(e){}
+      let p=null;
+      try{p=await geocodificarRua(entradas[i].nome,cidade,entradas[i].ni,entradas[i].nf)}catch(e){}
+      if(p)pontos.push(p);else naoEncontradas.push(entradas[i].nome);
       if(i<entradas.length-1)await esperar(1100);
     }
-    if(!pontos.length)return alert("Nenhuma rua pôde ser localizada.");
-    let inicio=null;if(usarGpsEl.checked){botao.textContent="📍 Obtendo localização...";inicio=await obterGPS();}
+    if(!pontos.length)return alert("Nenhuma rua pôde ser localizada. Confira os nomes e a cidade.");
+
+    let inicio=null,avisoTexto="";
+    if(querGps){
+      botao.textContent="📍 Obtendo localização...";
+      const g=await gpsPromise;
+      if(g&&g.ok){
+        inicio=g;
+        if(g.precisao>200)avisoTexto=`Localização aproximada (precisão de ~${Math.round(g.precisao)} m). Se o ponto de partida parecer errado, ative "Localização Precisa" nos Ajustes.`;
+      }else{
+        const seguir=confirm(`⚠️ Não foi possível usar sua localização atual.\n\n${mensagemErroGPS(g?g.code:0)}\n\nDeseja calcular mesmo assim, começando pela primeira rua da lista?`);
+        if(!seguir)return;
+        avisoTexto="Sua localização não foi obtida. A rota começou pela primeira rua da lista.";
+      }
+    }
+
     if(inicio){
-      // A localização atual é o ponto de partida real.
-      // As ruas permanecem como os destinos da rota, ordenadas a partir de onde o usuário está.
       currentStops=[
         {nome:"📍 Minha localização atual",lat:inicio.lat,lon:inicio.lon,isStart:true},
         ...nearestNeighborOrder(pontos,inicio)
@@ -504,6 +580,13 @@ document.getElementById("calcular").onclick=async()=>{
       const primeiro=pontos.shift();
       currentStops=[primeiro,...nearestNeighborOrder(pontos,primeiro)];
     }
+
+    if(naoEncontradas.length){
+      avisoTexto+=(avisoTexto?"<br>":"")+`Não encontradas: <b>${naoEncontradas.map(escapeHtml).join(", ")}</b>.`;
+    }
+    avisoGpsEl.innerHTML=avisoTexto;
+    avisoGpsEl.style.display=avisoTexto?"block":"none";
+
     renderStops();resultadoEl.style.display="block";timestampEl.textContent=`Calculada em ${new Date().toLocaleString("pt-BR")}`;salvarUltimaRota();
     setTimeout(()=>renderMap(currentStops),250);
     resultadoEl.scrollIntoView({behavior:"smooth",block:"start"});
@@ -511,26 +594,33 @@ document.getElementById("calcular").onclick=async()=>{
   finally{botao.disabled=false;botao.textContent="🚗 Calcular melhor rota";}
 };
 
+/* LISTA DE PARADAS (ponto de GPS fica travado no topo) */
 function renderStops(){
   stopsListEl.innerHTML="";
+  const inicioFixo=!!currentStops[0]?.isStart;
   currentStops.forEach((stop,index)=>{
+    const upOff=index===0||(inicioFixo&&index===1);
+    const downOff=index===currentStops.length-1||(inicioFixo&&index===0);
+    const badge=index===0?(stop.isStart?"📍 Ponto de partida (GPS)":"Ponto inicial (1ª rua)"):"";
     const div=document.createElement("div");div.className="stop";
     div.innerHTML=`
-      <div class="stop-number">${index+1}</div>
+      <div class="stop-number${stop.isStart?" start":""}">${index+1}</div>
       <div class="stop-info">
         <div class="stop-name">${escapeHtml(stop.nome)}</div>
         <div class="stop-coords">${stop.lat.toFixed(6)}, ${stop.lon.toFixed(6)}</div>
-        ${index===0?'<span class="start-badge">Ponto inicial</span>':""}
+        ${badge?`<span class="start-badge">${badge}</span>`:""}
       </div>
       <div class="stop-controls">
-        <button class="move up" ${index===0?"disabled":""}>▲</button>
-        <button class="move down" ${index===currentStops.length-1?"disabled":""}>▼</button>
+        <button class="move up" ${upOff?"disabled":""}>▲</button>
+        <button class="move down" ${downOff?"disabled":""}>▼</button>
       </div>`;
     div.querySelector(".up").onclick=()=>{
+      if(upOff)return;
       [currentStops[index-1],currentStops[index]]=[currentStops[index],currentStops[index-1]];
       renderStops();salvarUltimaRota();renderMap(currentStops);
     };
     div.querySelector(".down").onclick=()=>{
+      if(downOff)return;
       [currentStops[index],currentStops[index+1]]=[currentStops[index+1],currentStops[index]];
       renderStops();salvarUltimaRota();renderMap(currentStops);
     };
@@ -562,9 +652,7 @@ function limparMapa(){
   }
 }
 function renderMap(stops){
-  if(!map)return;
-  if(!map.loaded())return;
-  if(!stops||!stops.length)return;
+  if(!map||!map.loaded()||!stops||!stops.length)return;
   limparMapa();
   const bounds=new mapboxgl.LngLatBounds();
   const coords=stops.map(s=>[s.lon,s.lat]);
@@ -574,8 +662,10 @@ function renderMap(stops){
     markers.push(new mapboxgl.Marker({element:el}).setLngLat(c).setPopup(popup).addTo(map));
     bounds.extend(c);
   });
-  map.addSource("rota-sequencia",{type:"geojson",data:{type:"Feature",geometry:{type:"LineString",coordinates:coords}}});
-  map.addLayer({id:"rota-linha",type:"line",source:"rota-sequencia",layout:{"line-join":"round","line-cap":"round"},paint:{"line-color":"#126b3a","line-width":4,"line-opacity":.8}});
+  if(coords.length>1){
+    map.addSource("rota-sequencia",{type:"geojson",data:{type:"Feature",geometry:{type:"LineString",coordinates:coords}}});
+    map.addLayer({id:"rota-linha",type:"line",source:"rota-sequencia",layout:{"line-join":"round","line-cap":"round"},paint:{"line-color":"#126b3a","line-width":4,"line-opacity":.8}});
+  }
   if(coords.length===1)map.flyTo({center:coords[0],zoom:15,duration:700});
   else map.fitBounds(bounds,{padding:45,maxZoom:15,duration:700});
   mapStatusEl.textContent=`${stops.length} ponto(s) no mapa`;
@@ -596,25 +686,25 @@ function carregarUltimaRota(){
 }
 
 /* GOOGLE MAPS */
-document.getElementById("abrirGoogle").onclick=()=>{
-  if(!currentStops.length)return alert("Calcule uma rota primeiro.");
+function montarUrlGoogle(){
   const origin=`${currentStops[0].lat},${currentStops[0].lon}`;
-  const destination=`${currentStops[currentStops.length-1].lat},${currentStops[currentStops.length-1].lon}`;
+  const last=currentStops[currentStops.length-1];
+  const destination=`${last.lat},${last.lon}`;
   const waypoints=currentStops.slice(1,-1).map(s=>`${s.lat},${s.lon}`).join("|");
   let url=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`;
   if(waypoints)url+=`&waypoints=${encodeURIComponent(waypoints)}`;
-  url+="&travelmode=driving";window.open(url,"_blank");
+  return url+"&travelmode=driving";
+}
+document.getElementById("abrirGoogle").onclick=()=>{
+  if(!currentStops.length)return alert("Calcule uma rota primeiro.");
+  if(currentStops.length<2)return alert("A rota precisa de pelo menos 2 pontos. Deixe a localização atual marcada ou adicione mais ruas.");
+  window.open(montarUrlGoogle(),"_blank");
 };
 
 /* COMPARTILHAR */
 document.getElementById("compartilhar").onclick=async()=>{
   if(!currentStops.length)return alert("Calcule uma rota primeiro.");
-  const origin=`${currentStops[0].lat},${currentStops[0].lon}`;
-  const destination=`${currentStops[currentStops.length-1].lat},${currentStops[currentStops.length-1].lon}`;
-  const waypoints=currentStops.slice(1,-1).map(s=>`${s.lat},${s.lon}`).join("|");
-  let googleUrl=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`;
-  if(waypoints)googleUrl+=`&waypoints=${encodeURIComponent(waypoints)}`;
-  googleUrl+="&travelmode=driving";
+  const googleUrl=montarUrlGoogle();
   const texto=`🚗 Rota do Dia — Faturamento\n\n📅 Data: ${dataRotaEl.value}\n📍 Cidade/região: ${cidadeEl.value||"Não informada"}\n\n${currentStops.map((s,i)=>`${i+1}. ${s.nome}`).join("\n")}\n\n🗺️ Abrir rota no Google Maps:\n${googleUrl}`;
   if(navigator.share){try{await navigator.share({title:"Rota do Dia — Faturamento",text:texto});return}catch(e){if(e.name==="AbortError")return}}
   window.open("https://wa.me/?text="+encodeURIComponent(texto),"_blank");
@@ -622,16 +712,14 @@ document.getElementById("compartilhar").onclick=async()=>{
 
 /* COMPARTILHAR APLICATIVO */
 document.getElementById("compartilharApp").onclick=async()=>{
-  const appUrl=window.location.href;
+  const u=new URL(window.location.href);u.searchParams.delete("app_update");
+  const appUrl=u.toString();
   const texto="📍 Rota do Dia — Faturamento\n\nCompartilhe este aplicativo para acessar o Rota do Dia.";
   if(navigator.share){
-    try{
-      await navigator.share({title:"Rota do Dia — Faturamento",text:texto,url:appUrl});
-      return;
-    }catch(e){if(e.name==="AbortError")return}
+    try{await navigator.share({title:"Rota do Dia — Faturamento",text:texto,url:appUrl});return;}
+    catch(e){if(e.name==="AbortError")return}
   }
-  const whatsapp="https://wa.me/?text="+encodeURIComponent(texto+"\n"+appUrl);
-  window.open(whatsapp,"_blank");
+  window.open("https://wa.me/?text="+encodeURIComponent(texto+"\n"+appUrl),"_blank");
 };
 
 carregarUltimaRota();
