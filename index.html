@@ -493,8 +493,17 @@ document.getElementById("calcular").onclick=async()=>{
     }
     if(!pontos.length)return alert("Nenhuma rua pôde ser localizada.");
     let inicio=null;if(usarGpsEl.checked){botao.textContent="📍 Obtendo localização...";inicio=await obterGPS();}
-    if(inicio)currentStops=nearestNeighborOrder(pontos,inicio);
-    else{const primeiro=pontos.shift();currentStops=[primeiro,...nearestNeighborOrder(pontos,primeiro)];}
+    if(inicio){
+      // A localização atual é o ponto de partida real.
+      // As ruas permanecem como os destinos da rota, ordenadas a partir de onde o usuário está.
+      currentStops=[
+        {nome:"📍 Minha localização atual",lat:inicio.lat,lon:inicio.lon,isStart:true},
+        ...nearestNeighborOrder(pontos,inicio)
+      ];
+    }else{
+      const primeiro=pontos.shift();
+      currentStops=[primeiro,...nearestNeighborOrder(pontos,primeiro)];
+    }
     renderStops();resultadoEl.style.display="block";timestampEl.textContent=`Calculada em ${new Date().toLocaleString("pt-BR")}`;salvarUltimaRota();
     setTimeout(()=>renderMap(currentStops),250);
     resultadoEl.scrollIntoView({behavior:"smooth",block:"start"});
