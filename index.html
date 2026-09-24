@@ -183,7 +183,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:16px 5px 24px
     <span class="map-status" id="mapStatus">Configure o token do Mapbox</span>
   </div>
   <div id="map"></div>
-  <div class="map-note">O mapa mostra os pontos na ordem da rota. A linha é uma visualização da sequência; o cálculo atual da rota do aplicativo permanece o mesmo.</div>
+  <div class="map-note">A linha verde segue as ruas de carro, na ordem da lista. Distância e tempo são estimativas; para navegar com voz, use o Google Maps.</div>
 </div>
 
 <div class="card">
@@ -651,9 +651,34 @@ function limparMapa(){
     map.removeSource("rota-sequencia");
   }
 }
+/* TRAJETO REAL PELAS RUAS (Mapbox Directions)
+   Divide em blocos de até 25 pontos (limite do Mapbox).
+   Se falhar, o mapa mantém a linha reta. */
+let rotaReqId=0;
+async function buscarTrajeto(coords){
+  let linha=[],dist=0,dur=0;
+  for(let i=0;i<coords.length-1;i+=24){
+    const parte=coords.slice(i,i+25);
+    if(parte.length<2)continue;
+    const s=parte.map(c=>`${c[0].toFixed(6)},${c[1].toFixed(6)}`).join(";");
+    const url=`https://api.mapbox.com/directions/v5/mapbox/driving/${s}?geometries=geojson&overview=full&access_token=${MAPBOX_TOKEN}`;
+    const r=await fetch(url);
+    if(!r.ok)throw new Error("directions "+r.status);
+    const d=await r.json();
+    if(!d.routes||!d.routes.length)throw new Error("sem rota");
+    const g=d.routes[0].geometry.coordinates;
+    linha=linha.concat(linha.length?g.slice(1):g);
+    dist+=d.routes[0].distance;dur+=d.routes[0].duration;
+  }
+  return {linha,dist,dur};
+}
+function formatarDist(m){return m>=1000?`${(m/1000).toFixed(1).replace(".",",")} km`:`${Math.round(m)} m`}
+function formatarTempo(s){const min=Math.max(1,Math.round(s/60));return min>=60?`${Math.floor(min/60)}h${String(min%60).padStart(2,"0")}`:`${min} min`}
+
 function renderMap(stops){
   if(!map||!map.loaded()||!stops||!stops.length)return;
   limparMapa();
+  const reqId=++rotaReqId;
   const bounds=new mapboxgl.LngLatBounds();
   const coords=stops.map(s=>[s.lon,s.lat]);
   coords.forEach((c,i)=>{
@@ -662,13 +687,30 @@ function renderMap(stops){
     markers.push(new mapboxgl.Marker({element:el}).setLngLat(c).setPopup(popup).addTo(map));
     bounds.extend(c);
   });
-  if(coords.length>1){
-    map.addSource("rota-sequencia",{type:"geojson",data:{type:"Feature",geometry:{type:"LineString",coordinates:coords}}});
-    map.addLayer({id:"rota-linha",type:"line",source:"rota-sequencia",layout:{"line-join":"round","line-cap":"round"},paint:{"line-color":"#126b3a","line-width":4,"line-opacity":.8}});
+  if(coords.length===1){
+    map.flyTo({center:coords[0],zoom:15,duration:700});
+    mapStatusEl.textContent="1 ponto no mapa";
+    return;
   }
-  if(coords.length===1)map.flyTo({center:coords[0],zoom:15,duration:700});
-  else map.fitBounds(bounds,{padding:45,maxZoom:15,duration:700});
-  mapStatusEl.textContent=`${stops.length} ponto(s) no mapa`;
+  // Linha reta provisória enquanto o trajeto é calculado
+  map.addSource("rota-sequencia",{type:"geojson",data:{type:"Feature",geometry:{type:"LineString",coordinates:coords}}});
+  map.addLayer({id:"rota-linha",type:"line",source:"rota-sequencia",layout:{"line-join":"round","line-cap":"round"},paint:{"line-color":"#126b3a","line-width":5,"line-opacity":.85}});
+  map.fitBounds(bounds,{padding:45,maxZoom:15,duration:700});
+  mapStatusEl.textContent="🔎 Traçando trajeto pelas ruas...";
+
+  buscarTrajeto(coords).then(t=>{
+    if(reqId!==rotaReqId)return; // a ordem mudou enquanto calculava
+    const src=map.getSource("rota-sequencia");
+    if(!src)return;
+    src.setData({type:"Feature",geometry:{type:"LineString",coordinates:t.linha}});
+    const b=new mapboxgl.LngLatBounds();
+    t.linha.forEach(c=>b.extend(c));coords.forEach(c=>b.extend(c));
+    map.fitBounds(b,{padding:45,maxZoom:16,duration:700});
+    mapStatusEl.textContent=`🚗 ${formatarDist(t.dist)} · ~${formatarTempo(t.dur)}`;
+  }).catch(()=>{
+    if(reqId!==rotaReqId)return;
+    mapStatusEl.textContent=`${stops.length} pontos · trajeto indisponível (linha reta)`;
+  });
 }
 
 /* ÚLTIMA ROTA */
