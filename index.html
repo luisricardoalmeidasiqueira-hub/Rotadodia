@@ -10,20 +10,20 @@
 
 <style>
 :root{
-  --bg:#f2f6f3;
+  --bg:#f2f3f5;
   --card:#fff;
-  --text:#17351f;
-  --muted:#68756c;
-  --primary:#126b3a;
-  --primary-dark:#0b522c;
-  --border:#d8e1da;
+  --text:#1f2328;
+  --muted:#6b7078;
+  --primary:#4a4f57;
+  --primary-dark:#33373d;
+  --border:#d9dce1;
   --danger:#c62828;
-  --soft:#eaf1ec;
+  --soft:#eceef1;
   --shadow:0 3px 14px rgba(0,0,0,.08);
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif}
-body.dark{--bg:#101512;--card:#18201b;--text:#edf7ef;--muted:#aab7ad;--border:#344139;--soft:#25322a;--shadow:0 3px 16px rgba(0,0,0,.35)}
+body.dark{--bg:#121315;--card:#1c1d20;--text:#ececee;--muted:#a9adb3;--border:#3a3c41;--soft:#2a2c30;--primary:#5a6069;--primary-dark:#6b7078;--shadow:0 3px 16px rgba(0,0,0,.35)}
 .container{max-width:480px;margin:auto;padding:12px}
 header{background:var(--primary);color:#fff;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
 header h1{margin:0;font-size:21px}
@@ -58,32 +58,46 @@ button:disabled{opacity:.55;cursor:not-allowed}
 #resultado{display:none}
 .result-head{display:flex;justify-content:space-between;align-items:center}
 .timestamp{color:var(--muted);font-size:11px}
-.aviso-gps{display:none;background:#fff4e5;color:#8a4b00;border:1px solid #f3d19e;border-radius:10px;padding:9px;margin-top:8px;font-size:12px;line-height:1.4}
-body.dark .aviso-gps{background:#3a2a12;color:#ffd9a3;border-color:#6b4a1c}
+.aviso-gps{display:none;background:#eceef1;color:#3b3f45;border:1px solid #d0d3d8;border-radius:10px;padding:9px;margin-top:8px;font-size:12px;line-height:1.4}
+body.dark .aviso-gps{background:#2a2c30;color:#d4d7dc;border-color:#3a3c41}
 .stop{display:flex;align-items:center;gap:9px;border:1px solid var(--border);border-radius:12px;padding:9px;margin-top:8px}
 .stop-number{width:30px;height:30px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:bold;flex:none}
-.stop-number.start{background:#d97706}
+.stop-number.start{background:#1f2328}
 .stop-info{flex:1;min-width:0}.stop-name{font-size:14px;font-weight:bold;word-break:break-word}
 .stop-coords{font-size:10px;color:var(--muted);margin-top:2px}
 .stop-controls{display:flex;flex-direction:column;gap:3px}
 .move{width:31px;height:27px;padding:0;background:var(--soft);color:var(--text)}
-.start-badge{display:inline-block;margin-top:5px;font-size:10px;background:#e3f2e8;color:var(--primary);border-radius:10px;padding:3px 7px}
-body.dark .start-badge{background:#20392a;color:#9ee0b7}
+.start-badge{display:inline-block;margin-top:5px;font-size:10px;background:#e6e8eb;color:var(--primary);border-radius:10px;padding:3px 7px}
+body.dark .start-badge{background:#2f3237;color:#d4d7dc}
 .mapbox-wrap{padding:10px}.map-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
 .map-head strong{font-size:15px}.map-status{font-size:11px;color:var(--muted);text-align:right}
-#map{width:100%;height:330px;border-radius:12px;overflow:hidden;background:#dce5df}
+#map{width:100%;height:330px;border-radius:12px;overflow:hidden;background:#dfe1e4}
 .map-note{font-size:10px;color:var(--muted);line-height:1.35;margin-top:7px}
 .map-marker{width:31px;height:31px;border-radius:50%;background:var(--primary);border:3px solid #fff;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,.35)}
-.map-marker.start{background:#d97706}
+.map-marker.start{background:#1f2328}
+.map-marker.salvo{background:#6b7078;font-size:14px}
+.ponto{display:flex;gap:9px;align-items:flex-start;border:1px solid var(--border);border-radius:12px;padding:10px;margin-top:8px}
+.ponto-info{flex:1;min-width:0}
+.ponto-titulo{font-size:14px;font-weight:bold;word-break:break-word}
+.ponto-linha{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.35;word-break:break-word}
+.ponto-acoes{display:flex;flex-direction:column;gap:5px}
+.ponto-acoes button{padding:7px 9px;font-size:12px;white-space:nowrap}
 .help-card{display:none}
 .help-card.open{display:block}
 .help-list{margin:0;padding-left:20px;color:var(--text);font-size:13px;line-height:1.55}
 .help-list li{margin-bottom:7px}
 .help-tip{background:var(--soft);border-radius:10px;padding:10px;margin-top:10px;font-size:12px;line-height:1.45;color:var(--text)}
 footer{text-align:center;color:var(--muted);font-size:11px;padding:16px 5px 24px}
-.offline-banner{display:none;background:#fff4e5;color:#8a4b00;border:1px solid #f3d19e;border-radius:12px;padding:10px 12px;margin-bottom:12px;font-size:12px;line-height:1.4}
+.lembrete-mapa{display:none;background:#eceef1;color:#1f2328;border:1px solid #d0d3d8;border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:var(--shadow)}
+.lembrete-mapa.on{display:block}
+body.dark .lembrete-mapa{background:#23252a;color:#ececee;border-color:#3a3c41}
+.lembrete-mapa .section-title{margin-bottom:6px}
+.lembrete-mapa ol{margin:6px 0 12px;padding-left:20px;font-size:13px;line-height:1.55}
+.lembrete-mapa .btn-mapa{background:#4a4f57;color:#fff;width:100%;font-size:15px;padding:13px}
+.lembrete-mapa .btn-depois{background:transparent;color:inherit;width:100%;font-size:12px;font-weight:normal;margin-top:6px;text-decoration:underline}
+.offline-banner{display:none;background:#eceef1;color:#3b3f45;border:1px solid #d0d3d8;border-radius:12px;padding:10px 12px;margin-bottom:12px;font-size:12px;line-height:1.4}
 .offline-banner.on{display:block}
-body.dark .offline-banner{background:#3a2a12;color:#ffd9a3;border-color:#6b4a1c}
+body.dark .offline-banner{background:#2a2c30;color:#d4d7dc;border-color:#3a3c41}
 .street-endereco{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.35}
 .street-endereco:empty{display:none}
 .theme{position:fixed;right:12px;bottom:12px;z-index:20;width:44px;height:44px;padding:0;border-radius:50%;background:var(--primary);color:#fff;box-shadow:var(--shadow)}
@@ -92,7 +106,7 @@ body.dark .offline-banner{background:#3a2a12;color:#ffd9a3;border-color:#6b4a1c}
 <link rel="icon" type="image/png" sizes="512x512" href="app-icon.png">
 <link rel="apple-touch-icon" sizes="512x512" href="app-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#126b3a">
+<meta name="theme-color" content="#4a4f57">
 
 </head>
 
@@ -107,6 +121,19 @@ body.dark .offline-banner{background:#3a2a12;color:#ffd9a3;border-color:#6b4a1c}
     <button id="atualizarApp">🔄 Atualizar aplicativo</button>
   </div>
 </header>
+
+<div class="lembrete-mapa" id="lembreteMapa">
+  <div class="section-title">🗺️ Hora de atualizar o mapa</div>
+  <div style="font-size:13px;line-height:1.45">Para o Google Maps funcionar <b>sem internet</b> na rua, o mapa precisa estar baixado e atualizado. Toque no botão abaixo e faça assim:</div>
+  <ol>
+    <li>Toque na sua <b>foto</b> (canto de cima).</li>
+    <li>Toque em <b>Mapas off-line</b>.</li>
+    <li>Se não tiver mapa, toque em <b>Selecionar seu mapa</b>, cubra a cidade e toque em <b>Fazer download</b>.</li>
+    <li>Toque na <b>engrenagem ⚙️</b> e ligue <b>Atualizar mapas off-line automaticamente</b>.</li>
+  </ol>
+  <button class="btn-mapa" id="atualizarMapaBtn">🗺️ Atualizar mapa</button>
+  <button class="btn-depois" id="lembrarDepoisBtn">Lembrar depois</button>
+</div>
 
 <div class="offline-banner" id="offlineBanner">📴 <b>Sem internet.</b> Você pode adicionar coordenadas e sua posição normalmente. O mapa, a busca de ruas novas e o trajeto voltam sozinhos quando o sinal voltar.</div>
 
@@ -123,6 +150,9 @@ body.dark .offline-banner{background:#3a2a12;color:#ffd9a3;border-color:#6b4a1c}
     <li>Deixe <b>Usar minha localização atual como ponto de partida</b> marcado para começar a rota a partir de onde você está. Se o aparelho não liberar a localização, o aplicativo avisa e pergunta se deseja continuar pela primeira rua.</li>
     <li>Use <b>📍 Adicionar minha posição aqui</b> para colocar na lista a coordenada exata de onde você está, sem digitar. Funciona mesmo sem internet; o nome da rua aparece quando o sinal voltar.</li>
     <li><b>Sem internet:</b> o aplicativo abre normalmente (depois de ter sido aberto uma vez com internet). Coordenadas, sua posição e ruas que já foram buscadas antes continuam funcionando. O mapa e o trajeto aparecem quando o sinal voltar.</li>
+    <li><b>🔢 Medidores:</b> parado no local, toque em <b>📍 Salvar minha posição com nº do medidor</b>. Depois, em qualquer mês, digite o número em <b>Buscar pelo nº do medidor</b> e toque em <b>➕ Rota</b>, ou digite o número direto no campo da rua.</li>
+    <li><b>🗺️ Ver meus pontos salvos no mapa</b> mostra todos os medidores e coordenadas salvos (estrelas ★). Para voltar a ver a rota, calcule de novo ou mude a ordem.</li>
+    <li><b>🗺️ Atualizar mapa:</b> a cada 6 meses aparece um aviso no topo. Toque em <b>Atualizar mapa</b>, o Google Maps abre, e siga os passos do aviso.</li>
     <li><b>💾 Backup:</b> seus dados ficam só neste celular. Use <b>📤 Exportar backup</b> de vez em quando e guarde o arquivo. Para recuperar, toque em <b>📥 Importar backup</b> e escolha o arquivo.</li>
     <li>Toque em <b>🚗 Calcular melhor rota</b>. O aplicativo organiza os pontos por proximidade.</li>
     <li>Depois do cálculo, use as setas <b>▲ ▼</b> para mudar manualmente a ordem. O ponto de partida pelo GPS fica fixo no topo.</li>
@@ -160,6 +190,21 @@ body.dark .offline-banner{background:#3a2a12;color:#ffd9a3;border-color:#6b4a1c}
 </div>
 
 <div class="card">
+  <div class="section-title">🔢 Medidores e pontos salvos</div>
+  <div class="row">
+    <input type="text" id="buscaMedidor" placeholder="Buscar pelo nº do medidor" autocomplete="off" inputmode="text">
+    <button class="btn-secondary btn-small" id="limparBusca">✕</button>
+  </div>
+  <div id="pontosLista"></div>
+  <div style="height:10px"></div>
+  <div class="actions">
+    <button class="btn-primary full" id="salvarPosicaoMedidor">📍 Salvar minha posição com nº do medidor</button>
+    <button class="btn-secondary full" id="verPontosMapa">🗺️ Ver meus pontos salvos no mapa</button>
+  </div>
+  <div class="hint">A busca encontra os medidores que <b>você</b> salvou neste aparelho. Parado no local, toque em <b>📍 Salvar minha posição</b> e digite o nº do medidor. Depois é só buscar pelo número e tocar em <b>➕ Rota</b>. Também dá para digitar o nº do medidor direto no campo da rua.</div>
+</div>
+
+<div class="card">
   <button class="btn-secondary full" id="salvarEtapa">💾 Salvar esta lista como etapa</button>
   <div id="etapasSalvas" class="saved-list"></div>
 </div>
@@ -171,7 +216,7 @@ body.dark .offline-banner{background:#3a2a12;color:#ffd9a3;border-color:#6b4a1c}
     <button class="btn-secondary full" id="importarBackup">📥 Importar backup</button>
   </div>
   <input type="file" id="arquivoBackup" accept=".json,application/json" style="display:none">
-  <div class="hint" id="infoBackup">Guarda favoritos, coordenadas, cidades, etapas e a última rota num arquivo. Salve em Arquivos, iCloud ou mande pelo WhatsApp. Se limpar o navegador ou trocar de celular, é só importar.</div>
+  <div class="hint" id="infoBackup">Guarda medidores, favoritos, coordenadas, cidades, etapas e a última rota num arquivo. Salve em Arquivos, iCloud ou mande pelo WhatsApp. Se limpar o navegador ou trocar de celular, é só importar.</div>
 </div>
 
 <div class="card">
@@ -205,7 +250,7 @@ body.dark .offline-banner{background:#3a2a12;color:#ffd9a3;border-color:#6b4a1c}
     <span class="map-status" id="mapStatus">Configure o token do Mapbox</span>
   </div>
   <div id="map"></div>
-  <div class="map-note">A linha verde segue as ruas de carro, na ordem da lista. Distância e tempo são estimativas; para navegar com voz, use o Google Maps.</div>
+  <div class="map-note">A linha segue as ruas de carro, na ordem da lista. Distância e tempo são estimativas; para navegar com voz, use o Google Maps.</div>
 </div>
 
 <div class="card">
@@ -376,7 +421,7 @@ function criarRua(nome="",ni="",nf=""){
   div.innerHTML=`
     <div class="street-top">
       <div class="street-number"></div>
-      <input class="street-name" type="text" placeholder="Nome da rua ou coordenadas" value="${escapeHtml(nome)}">
+      <input class="street-name" type="text" placeholder="Rua, coordenadas ou nº do medidor" value="${escapeHtml(nome)}">
       <div class="street-actions">
         <button class="btn-secondary btn-small salvar-rua">☆</button>
         <button class="btn-danger btn-small remover-rua">×</button>
@@ -391,7 +436,9 @@ function criarRua(nome="",ni="",nf=""){
   div.querySelector(".remover-rua").onclick=()=>{div.remove();renumerarRuas()};
   div.querySelector(".salvar-rua").onclick=()=>{
     const n=div.querySelector(".street-name").value.trim();
-    if(n)salvarRua(n);else alert("Digite o nome da rua primeiro.");
+    if(!n)return alert("Digite o nome da rua primeiro.");
+    const c=lerCoord(n);
+    if(c)salvarPonto(c.lat,c.lon);else salvarRua(n);
   };
   ruasEl.appendChild(div);renumerarRuas();atualizarRotuloRua(div,false);
 }
@@ -435,11 +482,19 @@ async function enderecoDaCoord(lat,lon){
 }
 async function atualizarRotuloRua(div,buscar){
   const el=div.querySelector(".street-endereco");if(!el)return;
-  const c=lerCoord(div.querySelector(".street-name").value);
+  const texto=div.querySelector(".street-name").value;
+  const pm=pontoPorMedidor(texto);
+  if(pm){
+    const e=enderecoEmCache(pm.lat,pm.lon);
+    el.textContent=`🔢 Medidor salvo${e?` — 📌 ${e}`:` — ${pm.lat.toFixed(5)}, ${pm.lon.toFixed(5)}`}${pm.obs?` · 📝 ${pm.obs}`:""}`;
+    return;
+  }
+  const c=lerCoord(texto);
   if(!c){el.textContent="";return}
+  const pc=pontoPorCoord(c.lat,c.lon);
   let end=enderecoEmCache(c.lat,c.lon);
   if(!end&&buscar&&navigator.onLine){el.textContent="🔎 Buscando endereço...";end=await enderecoDaCoord(c.lat,c.lon);}
-  el.textContent=end?`📌 ${end}`:"📌 Coordenada salva — o endereço aparece quando houver internet";
+  el.textContent=(pc&&pc.medidor?`🔢 ${pc.medidor} — `:"")+(end?`📌 ${end}`:"📌 Coordenada salva — o endereço aparece quando houver internet");
 }
 let resolvendoRotulos=false;
 async function resolverRotulosPendentes(){
@@ -597,10 +652,11 @@ function rotuloRua(nome,ni,nf){
   return nome;
 }
 async function geocodificarRua(nome,cidade,ni,nf){
-  const c=lerCoord(nome);
+  const pm=pontoPorMedidor(nome);
+  const c=pm?{lat:pm.lat,lon:pm.lon}:lerCoord(nome);
   if(c){
     const end=enderecoEmCache(c.lat,c.lon);
-    return {nome:end?`📍 ${end}`:`📍 Ponto ${c.lat.toFixed(5)}, ${c.lon.toFixed(5)}`,lat:c.lat,lon:c.lon,coord:true,pendente:!end,rede:false};
+    return {nome:nomeDoPonto(c.lat,c.lon),lat:c.lat,lon:c.lon,coord:true,pendente:!end,rede:false};
   }
   const chave=`${nome}|${ni}|${cidade}`.toLowerCase();
   const cacheRuas=getCache("geo-ruas");
@@ -816,7 +872,7 @@ function renderMap(stops){
   }
   // Linha reta provisória enquanto o trajeto é calculado
   map.addSource("rota-sequencia",{type:"geojson",data:{type:"Feature",geometry:{type:"LineString",coordinates:coords}}});
-  map.addLayer({id:"rota-linha",type:"line",source:"rota-sequencia",layout:{"line-join":"round","line-cap":"round"},paint:{"line-color":"#126b3a","line-width":5,"line-opacity":.85}});
+  map.addLayer({id:"rota-linha",type:"line",source:"rota-sequencia",layout:{"line-join":"round","line-cap":"round"},paint:{"line-color":"#4a4f57","line-width":5,"line-opacity":.85}});
   map.fitBounds(bounds,{padding:45,maxZoom:15,duration:700});
   if(!navigator.onLine){mapStatusEl.textContent=`${stops.length} pontos · 📴 trajeto quando voltar o sinal`;return;}
   mapStatusEl.textContent="🔎 Traçando trajeto pelas ruas...";
@@ -888,9 +944,175 @@ document.getElementById("compartilharApp").onclick=async()=>{
 };
 
 /* ==========================================================
+   MEDIDORES E PONTOS SALVOS
+   ========================================================== */
+const pontosListaEl=document.getElementById("pontosLista");
+const buscaMedidorEl=document.getElementById("buscaMedidor");
+function getPontos(){try{return JSON.parse(localStorage.getItem("pontos-rota")||"[]")}catch(e){return[]}}
+function setPontos(a){localStorage.setItem("pontos-rota",JSON.stringify(a))}
+function normMedidor(t){return String(t||"").toUpperCase().replace(/[^0-9A-Z]/g,"")}
+function pontoPorMedidor(t){const n=normMedidor(t);if(!n||lerCoord(t))return null;return getPontos().find(p=>normMedidor(p.medidor)===n)||null}
+function pontoPorCoord(lat,lon){const k=chaveCoord(lat,lon);return getPontos().find(p=>chaveCoord(p.lat,p.lon)===k)||null}
+function nomeDoPonto(lat,lon){
+  const p=pontoPorCoord(lat,lon),end=enderecoEmCache(lat,lon);
+  const local=end?end:`${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+  return p&&p.medidor?`🔢 ${p.medidor} — ${local}`:`📍 ${end?end:"Ponto "+local}`;
+}
+function salvarPonto(lat,lon){
+  const medidor=prompt("Nº do medidor / equipamento (pode deixar em branco):","");
+  if(medidor===null)return false;
+  const obs=prompt("Observação (opcional) — ex.: casa dos fundos, portão azul:","");
+  if(obs===null)return false;
+  const a=getPontos();
+  const n=normMedidor(medidor);
+  if(n){
+    const dup=a.find(p=>normMedidor(p.medidor)===n);
+    if(dup){
+      if(!confirm(`O medidor ${dup.medidor} já está salvo. Trocar pela posição nova?`))return false;
+      a.splice(a.indexOf(dup),1);
+    }
+  }
+  a.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),medidor:medidor.trim(),lat,lon,obs:obs.trim(),criadoEm:new Date().toISOString()});
+  setPontos(a);
+  buscaMedidorEl.value=medidor.trim();
+  renderPontos(buscaMedidorEl.value);
+  enderecoDaCoord(lat,lon).then(()=>{renderPontos(buscaMedidorEl.value);[...ruasEl.querySelectorAll(".street")].forEach(d=>atualizarRotuloRua(d,false));});
+  [...ruasEl.querySelectorAll(".street")].forEach(d=>atualizarRotuloRua(d,false));
+  return true;
+}
+function adicionarCoordNaLista(lat,lon){
+  const txt=`${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+  const vazio=[...ruasEl.querySelectorAll(".street-name")].find(i=>!i.value.trim());
+  let div;
+  if(vazio){vazio.value=txt;div=vazio.closest(".street");}
+  else{criarRua(txt);div=ruasEl.lastElementChild;}
+  atualizarRotuloRua(div,true);
+  return div;
+}
+function renderPontos(filtro=""){
+  const n=normMedidor(filtro);
+  const todos=getPontos().slice().reverse();
+  let lista=n?todos.filter(p=>normMedidor(p.medidor).includes(n)):todos;
+  pontosListaEl.innerHTML="";
+  if(!todos.length){pontosListaEl.innerHTML='<div class="hint">Nenhum ponto salvo ainda.</div>';return}
+  if(n&&!lista.length){
+    pontosListaEl.innerHTML=`<div class="hint">Nenhum ponto salvo com o medidor <b>${escapeHtml(filtro)}</b>. Quando estiver no local, use <b>📍 Salvar minha posição com nº do medidor</b>.</div>`;
+    return;
+  }
+  const limite=n?30:5;
+  lista.slice(0,limite).forEach(p=>{
+    const end=enderecoEmCache(p.lat,p.lon);
+    const div=document.createElement("div");div.className="ponto";
+    div.innerHTML=`
+      <div class="ponto-info">
+        <div class="ponto-titulo">🔢 ${p.medidor?escapeHtml(p.medidor):"Sem nº de medidor"}</div>
+        <div class="ponto-linha">📌 ${end?escapeHtml(end):"Endereço aparece quando houver internet"}</div>
+        ${p.obs?`<div class="ponto-linha">📝 ${escapeHtml(p.obs)}</div>`:""}
+        <div class="stop-coords">${p.lat.toFixed(6)}, ${p.lon.toFixed(6)}</div>
+      </div>
+      <div class="ponto-acoes">
+        <button class="btn-primary add">➕ Rota</button>
+        <button class="btn-secondary ver">🗺️ Ver</button>
+        <button class="btn-danger del">🗑️</button>
+      </div>`;
+    div.querySelector(".add").onclick=()=>{
+      const d=adicionarCoordNaLista(p.lat,p.lon);
+      d.scrollIntoView({behavior:"smooth",block:"center"});
+    };
+    div.querySelector(".ver").onclick=()=>mostrarPontosNoMapa([p]);
+    div.querySelector(".del").onclick=()=>{
+      if(!confirm(`Excluir o ponto ${p.medidor?"do medidor "+p.medidor:"salvo"}?`))return;
+      setPontos(getPontos().filter(x=>x.id!==p.id));
+      renderPontos(buscaMedidorEl.value);
+    };
+    pontosListaEl.appendChild(div);
+  });
+  if(lista.length>limite){
+    const h=document.createElement("div");h.className="hint";
+    h.textContent=n?`Mostrando ${limite} de ${lista.length}. Digite mais números para filtrar.`:`Mostrando os ${limite} mais recentes de ${lista.length}. Busque pelo nº do medidor para achar os outros.`;
+    pontosListaEl.appendChild(h);
+  }
+}
+buscaMedidorEl.addEventListener("input",()=>renderPontos(buscaMedidorEl.value));
+document.getElementById("limparBusca").onclick=()=>{buscaMedidorEl.value="";renderPontos("");};
+document.getElementById("salvarPosicaoMedidor").onclick=async()=>{
+  const b=document.getElementById("salvarPosicaoMedidor");
+  b.disabled=true;b.textContent="📍 Obtendo sua posição...";
+  const g=await obterGPS();
+  b.disabled=false;b.textContent="📍 Salvar minha posição com nº do medidor";
+  if(!g.ok)return alert(mensagemErroGPS(g.code));
+  if(g.precisao>50&&!confirm(`A precisão do GPS agora está em ~${Math.round(g.precisao)} m. Salvar mesmo assim?\n\n(Em local aberto costuma ficar mais precisa.)`))return;
+  if(salvarPonto(g.lat,g.lon))alert("Ponto salvo.");
+};
+function mostrarPontosNoMapa(lista){
+  if(!lista.length)return alert("Nenhum ponto salvo ainda.");
+  if(!map||!map.loaded())return alert(navigator.onLine?"O mapa ainda está carregando. Tente de novo em instantes.":"Sem internet: o mapa aparece quando o sinal voltar.");
+  limparMapa();rotaReqId++;
+  const b=new mapboxgl.LngLatBounds();
+  lista.forEach(p=>{
+    const end=enderecoEmCache(p.lat,p.lon);
+    const el=document.createElement("div");el.className="map-marker salvo";el.textContent="★";
+    const html=`<strong>🔢 ${p.medidor?escapeHtml(p.medidor):"Ponto salvo"}</strong><br>${end?escapeHtml(end)+"<br>":""}${p.obs?"📝 "+escapeHtml(p.obs)+"<br>":""}${p.lat.toFixed(6)}, ${p.lon.toFixed(6)}`;
+    markers.push(new mapboxgl.Marker({element:el}).setLngLat([p.lon,p.lat]).setPopup(new mapboxgl.Popup({offset:20}).setHTML(html)).addTo(map));
+    b.extend([p.lon,p.lat]);
+  });
+  if(lista.length===1){map.flyTo({center:[lista[0].lon,lista[0].lat],zoom:17,duration:700});markers[0].togglePopup();}
+  else map.fitBounds(b,{padding:45,maxZoom:16,duration:700});
+  mapStatusEl.textContent=`★ ${lista.length} ponto(s) salvo(s) · calcule a rota para voltar`;
+  document.getElementById("map").scrollIntoView({behavior:"smooth",block:"center"});
+}
+document.getElementById("verPontosMapa").onclick=()=>{
+  const lista=getPontos();
+  getRuas().forEach(nome=>{const c=lerCoord(nome);if(c&&!pontoPorCoord(c.lat,c.lon))lista.push({id:"f"+nome,medidor:"",lat:c.lat,lon:c.lon,obs:""});});
+  mostrarPontosNoMapa(lista);
+};
+let resolvendoPontos=false;
+async function resolverPontosPendentes(){
+  if(resolvendoPontos||!navigator.onLine)return;
+  resolvendoPontos=true;let mudou=false;
+  try{
+    for(const p of getPontos()){
+      if(!enderecoEmCache(p.lat,p.lon)){if(await enderecoDaCoord(p.lat,p.lon))mudou=true;await esperar(1100);}
+    }
+  }finally{resolvendoPontos=false}
+  if(mudou)renderPontos(buscaMedidorEl.value);
+}
+renderPontos();
+
+/* ==========================================================
+   LEMBRETE: ATUALIZAR MAPA DO GOOGLE MAPS (a cada 6 meses)
+   ========================================================== */
+const DIAS_LEMBRETE_MAPA=182;
+const lembreteMapaEl=document.getElementById("lembreteMapa");
+function verificarLembreteMapa(){
+  const ultimo=localStorage.getItem("lembrete-mapa");
+  const adiado=localStorage.getItem("lembrete-mapa-adiado");
+  const agora=Date.now();
+  if(adiado&&agora<+adiado){lembreteMapaEl.classList.remove("on");return}
+  const vencido=!ultimo||(agora-new Date(ultimo).getTime())>DIAS_LEMBRETE_MAPA*86400000;
+  lembreteMapaEl.classList.toggle("on",vencido);
+}
+document.getElementById("atualizarMapaBtn").onclick=()=>{
+  localStorage.setItem("lembrete-mapa",new Date().toISOString());
+  localStorage.removeItem("lembrete-mapa-adiado");
+  lembreteMapaEl.classList.remove("on");
+  // Tenta abrir o aplicativo do Google Maps; se não estiver instalado, abre o site.
+  const inicio=Date.now();
+  window.location.href="comgooglemaps://";
+  setTimeout(()=>{
+    if(!document.hidden&&Date.now()-inicio<2500)window.open("https://www.google.com/maps","_blank");
+  },1500);
+};
+document.getElementById("lembrarDepoisBtn").onclick=()=>{
+  localStorage.setItem("lembrete-mapa-adiado",String(Date.now()+7*86400000));
+  lembreteMapaEl.classList.remove("on");
+};
+verificarLembreteMapa();
+
+/* ==========================================================
    BACKUP (exportar / importar)
    ========================================================== */
-const CHAVES_BACKUP=["cidades-rota","ruas-rota","etapas-rota","ultima-rota","tema-rota","enderecos-coord","geo-ruas"];
+const CHAVES_BACKUP=["lembrete-mapa","pontos-rota","cidades-rota","ruas-rota","etapas-rota","ultima-rota","tema-rota","enderecos-coord","geo-ruas"];
 const infoBackupEl=document.getElementById("infoBackup");
 const textoInfoBackup=infoBackupEl.textContent;
 function mostrarUltimoBackup(){
@@ -937,6 +1159,16 @@ document.getElementById("arquivoBackup").onchange=async ev=>{
     localStorage.setItem(k,JSON.stringify(atual));
   };
   juntarLista("cidades-rota");juntarLista("ruas-rota");
+  if(Array.isArray(d["pontos-rota"])){
+    const atual=getPontos();
+    d["pontos-rota"].forEach(p=>{
+      if(!p||typeof p.lat!=="number"||typeof p.lon!=="number")return;
+      const n=normMedidor(p.medidor);
+      const existe=atual.some(a=>a.id===p.id||(n&&normMedidor(a.medidor)===n)||(!n&&chaveCoord(a.lat,a.lon)===chaveCoord(p.lat,p.lon)));
+      if(!existe)atual.push(p);
+    });
+    setPontos(atual);
+  }
   if(Array.isArray(d["etapas-rota"])){
     const atual=getEtapas();
     d["etapas-rota"].forEach(e=>{if(e&&e.nome&&!atual.some(a=>a.nome===e.nome&&JSON.stringify(a.ruas)===JSON.stringify(e.ruas)))atual.push(e)});
@@ -947,7 +1179,7 @@ document.getElementById("arquivoBackup").onchange=async ev=>{
   });
   if(d["ultima-rota"]&&!localStorage.getItem("ultima-rota"))localStorage.setItem("ultima-rota",JSON.stringify(d["ultima-rota"]));
   if(d["tema-rota"]&&!localStorage.getItem("tema-rota"))localStorage.setItem("tema-rota",d["tema-rota"]);
-  renderCidades();renderRuasSalvas();renderEtapas();aplicarTema();
+  renderCidades();renderRuasSalvas();renderEtapas();aplicarTema();renderPontos(buscaMedidorEl.value);
   if(!currentStops.length)carregarUltimaRota();
   if(currentStops.length)renderMap(currentStops);
   alert("Backup importado.");
@@ -969,11 +1201,11 @@ async function atualizarNomesPendentes(){
   try{
     for(const s of pend){
       const end=await enderecoDaCoord(s.lat,s.lon);
-      if(end){s.nome=`📍 ${end}`;s.pendente=false;mudou=true;}
+      if(end){s.nome=nomeDoPonto(s.lat,s.lon);s.pendente=false;mudou=true;}
       await esperar(1100);
     }
   }finally{atualizandoNomes=false}
-  if(mudou){renderStops();salvarUltimaRota();renderMap(currentStops);renderRuasSalvas();}
+  if(mudou){renderStops();salvarUltimaRota();renderMap(currentStops);renderRuasSalvas();renderPontos(buscaMedidorEl.value);}
 }
 const offlineBannerEl=document.getElementById("offlineBanner");
 function atualizarConexao(){
@@ -986,6 +1218,7 @@ window.addEventListener("online",async()=>{
   else if(currentStops.length)renderMap(currentStops);
   await atualizarNomesPendentes();
   await resolverRotulosPendentes();
+  await resolverPontosPendentes();
 });
 atualizarConexao();
 
@@ -996,7 +1229,7 @@ if("serviceWorker" in navigator){
 
 carregarUltimaRota();
 iniciarMapa();
-setTimeout(()=>{atualizarNomesPendentes().then(resolverRotulosPendentes)},2000);
+setTimeout(()=>{atualizarNomesPendentes().then(resolverRotulosPendentes).then(resolverPontosPendentes)},2000);
 </script>
 </body>
 </html>
