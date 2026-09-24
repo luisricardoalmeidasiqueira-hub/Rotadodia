@@ -28,6 +28,8 @@ body.dark{--bg:#101512;--card:#18201b;--text:#edf7ef;--muted:#aab7ad;--border:#3
 header{background:var(--primary);color:#fff;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
 header h1{margin:0;font-size:21px}
 header p{margin:5px 0 0;font-size:13px;opacity:.92}
+.header-actions{display:flex;gap:8px;margin-top:12px}
+.header-actions button{flex:1;background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.25);padding:9px 8px;font-size:12px}
 .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:var(--shadow)}
 .section-title{font-size:15px;font-weight:bold;margin-bottom:9px}
 label{display:block;font-size:13px;font-weight:bold;margin-bottom:6px}
@@ -42,7 +44,9 @@ button:disabled{opacity:.55;cursor:not-allowed}
 .btn-small{padding:8px 10px;font-size:13px}.full{width:100%}
 .hint{color:var(--muted);font-size:12px;line-height:1.4;margin-top:7px}
 .saved-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.chip{background:var(--soft);color:var(--primary);border:1px solid var(--border);border-radius:20px;padding:7px 10px;font-size:12px}
+.chip-wrap{display:inline-flex;align-items:center;background:var(--soft);border:1px solid var(--border);border-radius:20px;overflow:hidden}
+.chip{background:transparent;color:var(--primary);border:0;border-radius:0;padding:7px 8px 7px 10px;font-size:12px}
+.chip-delete{background:transparent;color:var(--danger);border:0;border-left:1px solid var(--border);border-radius:0;padding:7px 9px;font-size:14px;line-height:1}
 .street{border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:9px}
 .street-top{display:flex;align-items:center;gap:7px;margin-bottom:8px}
 .street-number{width:30px;height:30px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;flex:none}
@@ -68,6 +72,11 @@ body.dark .start-badge{background:#20392a;color:#9ee0b7}
 .map-note{font-size:10px;color:var(--muted);line-height:1.35;margin-top:7px}
 .map-marker{width:31px;height:31px;border-radius:50%;background:var(--primary);border:3px solid #fff;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,.35)}
 .map-marker.start{background:#d97706}
+.help-card{display:none}
+.help-card.open{display:block}
+.help-list{margin:0;padding-left:20px;color:var(--text);font-size:13px;line-height:1.55}
+.help-list li{margin-bottom:7px}
+.help-tip{background:var(--soft);border-radius:10px;padding:10px;margin-top:10px;font-size:12px;line-height:1.45;color:var(--text)}
 footer{text-align:center;color:var(--muted);font-size:11px;padding:16px 5px 24px}
 .theme{position:fixed;right:12px;bottom:12px;z-index:20;width:44px;height:44px;padding:0;border-radius:50%;background:var(--primary);color:#fff;box-shadow:var(--shadow)}
 </style>
@@ -85,7 +94,31 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:16px 5px 24px
 <header>
   <h1>Rota do Dia — Faturamento</h1>
   <p>Organize suas ruas e encontre uma ordem prática para a rota.</p>
+  <div class="header-actions">
+    <button id="comoUsar">📖 Como usar</button>
+    <button id="atualizarApp">🔄 Atualizar aplicativo</button>
+  </div>
 </header>
+
+<div class="card help-card" id="ajuda">
+  <div class="section-title">📖 Como usar o aplicativo</div>
+  <ol class="help-list">
+    <li><b>Escolha a data</b> da rota.</li>
+    <li>Digite a <b>cidade ou região</b>. O botão 📍 pode identificar a cidade pela sua localização.</li>
+    <li>Em <b>Ruas da rota</b>, digite o nome da rua e, se quiser, informe o <b>Nº inicial e Nº final</b>.</li>
+    <li>Para guardar uma rua para usar novamente, toque na <b>☆</b> ao lado da rua. Ela aparecerá embaixo como favorita.</li>
+    <li>Para apagar uma rua favorita, toque na <b>🗑️ lixeira</b> que aparece ao lado do nome dela.</li>
+    <li>Use <b>📍 Preencher ruas de um bairro inteiro</b> se quiser buscar automaticamente as ruas de um bairro.</li>
+    <li>Se quiser guardar uma lista inteira de ruas, use <b>💾 Salvar esta lista como etapa</b>.</li>
+    <li>Deixe <b>Usar minha localização atual como ponto de partida</b> marcado para começar a rota a partir de onde você está.</li>
+    <li>Toque em <b>🚗 Calcular melhor rota</b>. O aplicativo organiza os pontos por proximidade.</li>
+    <li>Depois do cálculo, use as setas <b>▲ ▼</b> para mudar manualmente a ordem.</li>
+    <li>Quando estiver tudo certo, use <b>🗺️ Abrir rota no Google Maps</b> para navegar ou <b>📤 Compartilhar rota</b> para enviar a rota.</li>
+  </ol>
+  <div class="help-tip">
+    <b>Dica:</b> o botão <b>🔄 Atualizar aplicativo</b> serve para carregar a versão mais nova do aplicativo depois que uma atualização for publicada. Suas ruas favoritas, cidades salvas e etapas ficam guardadas no aparelho.
+  </div>
+</div>
 
 <div class="card">
   <div class="section-title">Data da rota</div>
@@ -149,7 +182,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:16px 5px 24px
   <div class="actions">
     <button class="btn-primary full" id="abrirGoogle">🗺️ Abrir rota no Google Maps</button>
     <button class="btn-secondary full" id="compartilhar">📤 Compartilhar rota</button>
-  <button class="btn-secondary full" id="compartilharApp">📲 Compartilhar aplicativo</button>
+    <button class="btn-secondary full" id="compartilharApp">📲 Compartilhar aplicativo</button>
   </div>
 </div>
 
@@ -191,6 +224,25 @@ function escapeHtml(v){
   return String(v||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
 }
 
+/* COMO USAR */
+document.getElementById("comoUsar").onclick=()=>{
+  const ajuda=document.getElementById("ajuda");
+  const aberto=ajuda.classList.toggle("open");
+  document.getElementById("comoUsar").textContent=aberto?"📖 Fechar como usar":"📖 Como usar";
+  if(aberto)setTimeout(()=>ajuda.scrollIntoView({behavior:"smooth",block:"start"}),50);
+};
+
+/* ATUALIZAR APLICATIVO
+   Usa um parâmetro de versão para forçar o navegador a carregar
+   novamente o index publicado, sem apagar os dados do localStorage. */
+document.getElementById("atualizarApp").onclick=()=>{
+  const confirmar=confirm("Atualizar o aplicativo agora?\n\nSe houver uma versão nova publicada, ela será carregada. Seus favoritos, cidades e etapas salvas permanecem no aparelho.");
+  if(!confirmar)return;
+  const url=new URL(window.location.href);
+  url.searchParams.set("app_update",Date.now());
+  window.location.replace(url.toString());
+};
+
 /* TEMA */
 function aplicarTema(){
   const dark=localStorage.getItem("tema-rota")==="dark";
@@ -209,17 +261,31 @@ function getCidades(){return JSON.parse(localStorage.getItem("cidades-rota")||"[
 function renderCidades(){
   cidadesSalvasEl.innerHTML="";
   getCidades().forEach((cidade,index)=>{
+    const wrap=document.createElement("div");
+    wrap.className="chip-wrap";
+
     const b=document.createElement("button");
-    b.className="chip"; b.textContent="★ "+cidade;
+    b.className="chip";
+    b.textContent="★ "+cidade;
     b.onclick=()=>cidadeEl.value=cidade;
-    b.oncontextmenu=e=>{
-      e.preventDefault();
-      if(confirm("Excluir esta cidade salva?")){
-        const a=getCidades();a.splice(index,1);
-        localStorage.setItem("cidades-rota",JSON.stringify(a));renderCidades();
+
+    const del=document.createElement("button");
+    del.className="chip-delete";
+    del.type="button";
+    del.title="Excluir cidade salva";
+    del.textContent="🗑️";
+    del.onclick=()=>{
+      if(confirm(`Excluir a cidade salva "${cidade}"?`)){
+        const a=getCidades();
+        a.splice(index,1);
+        localStorage.setItem("cidades-rota",JSON.stringify(a));
+        renderCidades();
       }
     };
-    cidadesSalvasEl.appendChild(b);
+
+    wrap.appendChild(b);
+    wrap.appendChild(del);
+    cidadesSalvasEl.appendChild(wrap);
   });
 }
 document.getElementById("salvarCidade").onclick=()=>{
@@ -273,7 +339,7 @@ function renumerarRuas(){
 document.getElementById("adicionarRua").onclick=()=>criarRua();
 criarRua();
 
-/* RUAS SALVAS */
+/* RUAS SALVAS / FAVORITAS */
 function getRuas(){return JSON.parse(localStorage.getItem("ruas-rota")||"[]")}
 function salvarRua(nome){
   const a=getRuas();if(!a.includes(nome))a.push(nome);
@@ -282,14 +348,32 @@ function salvarRua(nome){
 function renderRuasSalvas(){
   ruasSalvasEl.innerHTML="";
   getRuas().forEach((nome,index)=>{
-    const b=document.createElement("button");b.className="chip";b.textContent="★ "+nome;b.onclick=()=>criarRua(nome);
-    b.oncontextmenu=e=>{
-      e.preventDefault();
-      if(confirm("Excluir esta rua salva?")){
-        const a=getRuas();a.splice(index,1);localStorage.setItem("ruas-rota",JSON.stringify(a));renderRuasSalvas();
+    const wrap=document.createElement("div");
+    wrap.className="chip-wrap";
+
+    const b=document.createElement("button");
+    b.className="chip";
+    b.textContent="★ "+nome;
+    b.title="Adicionar esta rua à rota";
+    b.onclick=()=>criarRua(nome);
+
+    const del=document.createElement("button");
+    del.className="chip-delete";
+    del.type="button";
+    del.title="Excluir rua favorita";
+    del.textContent="🗑️";
+    del.onclick=()=>{
+      if(confirm(`Excluir a rua favorita "${nome}"?`)){
+        const a=getRuas();
+        a.splice(index,1);
+        localStorage.setItem("ruas-rota",JSON.stringify(a));
+        renderRuasSalvas();
       }
     };
-    ruasSalvasEl.appendChild(b);
+
+    wrap.appendChild(b);
+    wrap.appendChild(del);
+    ruasSalvasEl.appendChild(wrap);
   });
 }
 renderRuasSalvas();
@@ -321,13 +405,31 @@ function getEtapas(){return JSON.parse(localStorage.getItem("etapas-rota")||"[]"
 function renderEtapas(){
   etapasSalvasEl.innerHTML="";
   getEtapas().forEach((etapa,index)=>{
-    const b=document.createElement("button");b.className="chip";b.textContent="📁 "+etapa.nome;
+    const wrap=document.createElement("div");
+    wrap.className="chip-wrap";
+
+    const b=document.createElement("button");
+    b.className="chip";
+    b.textContent="📁 "+etapa.nome;
     b.onclick=()=>{cidadeEl.value=etapa.cidade||"";ruasEl.innerHTML="";(etapa.ruas||[]).forEach(n=>criarRua(n));};
-    b.oncontextmenu=e=>{
-      e.preventDefault();
-      if(confirm("Excluir esta etapa salva?")){const a=getEtapas();a.splice(index,1);localStorage.setItem("etapas-rota",JSON.stringify(a));renderEtapas();}
+
+    const del=document.createElement("button");
+    del.className="chip-delete";
+    del.type="button";
+    del.title="Excluir etapa salva";
+    del.textContent="🗑️";
+    del.onclick=()=>{
+      if(confirm(`Excluir a etapa "${etapa.nome}"?`)){
+        const a=getEtapas();
+        a.splice(index,1);
+        localStorage.setItem("etapas-rota",JSON.stringify(a));
+        renderEtapas();
+      }
     };
-    etapasSalvasEl.appendChild(b);
+
+    wrap.appendChild(b);
+    wrap.appendChild(del);
+    etapasSalvasEl.appendChild(wrap);
   });
 }
 document.getElementById("salvarEtapa").onclick=()=>{
