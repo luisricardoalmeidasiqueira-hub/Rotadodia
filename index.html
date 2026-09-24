@@ -81,6 +81,11 @@ body.dark .start-badge{background:#20392a;color:#9ee0b7}
 .help-list li{margin-bottom:7px}
 .help-tip{background:var(--soft);border-radius:10px;padding:10px;margin-top:10px;font-size:12px;line-height:1.45;color:var(--text)}
 footer{text-align:center;color:var(--muted);font-size:11px;padding:16px 5px 24px}
+.offline-banner{display:none;background:#fff4e5;color:#8a4b00;border:1px solid #f3d19e;border-radius:12px;padding:10px 12px;margin-bottom:12px;font-size:12px;line-height:1.4}
+.offline-banner.on{display:block}
+body.dark .offline-banner{background:#3a2a12;color:#ffd9a3;border-color:#6b4a1c}
+.street-endereco{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.35}
+.street-endereco:empty{display:none}
 .theme{position:fixed;right:12px;bottom:12px;z-index:20;width:44px;height:44px;padding:0;border-radius:50%;background:var(--primary);color:#fff;box-shadow:var(--shadow)}
 </style>
 
@@ -103,6 +108,8 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:16px 5px 24px
   </div>
 </header>
 
+<div class="offline-banner" id="offlineBanner">📴 <b>Sem internet.</b> Você pode adicionar coordenadas e sua posição normalmente. O mapa, a busca de ruas novas e o trajeto voltam sozinhos quando o sinal voltar.</div>
+
 <div class="card help-card" id="ajuda">
   <div class="section-title">📖 Como usar o aplicativo</div>
   <ol class="help-list">
@@ -114,6 +121,9 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:16px 5px 24px
     <li>Use <b>📍 Preencher ruas de um bairro inteiro</b> se quiser buscar automaticamente as ruas de um bairro.</li>
     <li>Se quiser guardar uma lista inteira de ruas, use <b>💾 Salvar esta lista como etapa</b>.</li>
     <li>Deixe <b>Usar minha localização atual como ponto de partida</b> marcado para começar a rota a partir de onde você está. Se o aparelho não liberar a localização, o aplicativo avisa e pergunta se deseja continuar pela primeira rua.</li>
+    <li>Use <b>📍 Adicionar minha posição aqui</b> para colocar na lista a coordenada exata de onde você está, sem digitar. Funciona mesmo sem internet; o nome da rua aparece quando o sinal voltar.</li>
+    <li><b>Sem internet:</b> o aplicativo abre normalmente (depois de ter sido aberto uma vez com internet). Coordenadas, sua posição e ruas que já foram buscadas antes continuam funcionando. O mapa e o trajeto aparecem quando o sinal voltar.</li>
+    <li><b>💾 Backup:</b> seus dados ficam só neste celular. Use <b>📤 Exportar backup</b> de vez em quando e guarde o arquivo. Para recuperar, toque em <b>📥 Importar backup</b> e escolha o arquivo.</li>
     <li>Toque em <b>🚗 Calcular melhor rota</b>. O aplicativo organiza os pontos por proximidade.</li>
     <li>Depois do cálculo, use as setas <b>▲ ▼</b> para mudar manualmente a ordem. O ponto de partida pelo GPS fica fixo no topo.</li>
     <li>Quando estiver tudo certo, use <b>🗺️ Abrir rota no Google Maps</b> para navegar ou <b>📤 Compartilhar rota</b> para enviar a rota.</li>
@@ -143,6 +153,8 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:16px 5px 24px
   <div id="ruas"></div>
   <button class="btn-secondary full" id="adicionarRua">＋ Adicionar rua</button>
   <div style="height:8px"></div>
+  <button class="btn-secondary full" id="adicionarPosicao">📍 Adicionar minha posição aqui</button>
+  <div style="height:8px"></div>
   <button class="btn-secondary full" id="bairroInteiro">📍 Preencher ruas de um bairro inteiro</button>
   <div id="ruasSalvas" class="saved-list"></div>
 </div>
@@ -150,6 +162,16 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:16px 5px 24px
 <div class="card">
   <button class="btn-secondary full" id="salvarEtapa">💾 Salvar esta lista como etapa</button>
   <div id="etapasSalvas" class="saved-list"></div>
+</div>
+
+<div class="card">
+  <div class="section-title">💾 Backup dos seus dados</div>
+  <div class="actions">
+    <button class="btn-secondary full" id="exportarBackup">📤 Exportar backup</button>
+    <button class="btn-secondary full" id="importarBackup">📥 Importar backup</button>
+  </div>
+  <input type="file" id="arquivoBackup" accept=".json,application/json" style="display:none">
+  <div class="hint" id="infoBackup">Guarda favoritos, coordenadas, cidades, etapas e a última rota num arquivo. Salve em Arquivos, iCloud ou mande pelo WhatsApp. Se limpar o navegador ou trocar de celular, é só importar.</div>
 </div>
 
 <div class="card">
@@ -242,9 +264,14 @@ document.getElementById("comoUsar").onclick=()=>{
 };
 
 /* ATUALIZAR APLICATIVO */
-document.getElementById("atualizarApp").onclick=()=>{
+document.getElementById("atualizarApp").onclick=async()=>{
+  if(!navigator.onLine)return alert("Sem internet no momento. Conecte-se para buscar a versão nova do aplicativo.");
   const confirmar=confirm("Atualizar o aplicativo agora?\n\nSe houver uma versão nova publicada, ela será carregada. Seus favoritos, cidades e etapas salvas permanecem no aparelho.");
   if(!confirmar)return;
+  try{
+    const reg=navigator.serviceWorker&&await navigator.serviceWorker.getRegistration();
+    if(reg)await reg.update();
+  }catch(e){}
   const url=new URL(window.location.href);
   url.searchParams.set("app_update",Date.now());
   window.location.replace(url.toString());
@@ -358,13 +385,15 @@ function criarRua(nome="",ni="",nf=""){
     <div class="street-bottom">
       <input class="numero-inicial" type="number" inputmode="numeric" placeholder="Nº inicial" value="${escapeHtml(ni)}">
       <input class="numero-final" type="number" inputmode="numeric" placeholder="Nº final" value="${escapeHtml(nf)}">
-    </div>`;
+    </div>
+    <div class="street-endereco"></div>`;
+  div.querySelector(".street-name").addEventListener("change",()=>atualizarRotuloRua(div,true));
   div.querySelector(".remover-rua").onclick=()=>{div.remove();renumerarRuas()};
   div.querySelector(".salvar-rua").onclick=()=>{
     const n=div.querySelector(".street-name").value.trim();
     if(n)salvarRua(n);else alert("Digite o nome da rua primeiro.");
   };
-  ruasEl.appendChild(div);renumerarRuas();
+  ruasEl.appendChild(div);renumerarRuas();atualizarRotuloRua(div,false);
 }
 function renumerarRuas(){
   [...ruasEl.children].forEach((d,i)=>d.querySelector(".street-number").textContent=i+1);
@@ -377,6 +406,71 @@ function lerRuasDaTela(){
   })).filter(x=>x.nome);
 }
 document.getElementById("adicionarRua").onclick=()=>criarRua();
+
+/* ==========================================================
+   COORDENADAS
+   Endereços encontrados ficam guardados no aparelho, então
+   funcionam depois mesmo sem internet.
+   ========================================================== */
+const RE_COORD=/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/;
+function lerCoord(t){const m=String(t||"").match(RE_COORD);return m?{lat:+m[1],lon:+m[2]}:null}
+function chaveCoord(lat,lon){return `${lat.toFixed(5)},${lon.toFixed(5)}`}
+function getCache(k){try{return JSON.parse(localStorage.getItem(k)||"{}")}catch(e){return{}}}
+function setCache(k,o){try{localStorage.setItem(k,JSON.stringify(o))}catch(e){}}
+function enderecoEmCache(lat,lon){return getCache("enderecos-coord")[chaveCoord(lat,lon)]||null}
+async function enderecoDaCoord(lat,lon){
+  const salvo=enderecoEmCache(lat,lon);
+  if(salvo)return salvo;
+  if(!navigator.onLine)return null;
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=18&accept-language=pt-BR`);
+    if(!r.ok)return null;
+    const d=await r.json();const a=d.address||{};
+    const rua=a.road||a.pedestrian||a.residential||a.neighbourhood||a.suburb||"";
+    if(!rua)return null;
+    const txt=a.house_number?`${rua}, ${a.house_number}`:rua;
+    const cache=getCache("enderecos-coord");cache[chaveCoord(lat,lon)]=txt;setCache("enderecos-coord",cache);
+    return txt;
+  }catch(e){return null}
+}
+async function atualizarRotuloRua(div,buscar){
+  const el=div.querySelector(".street-endereco");if(!el)return;
+  const c=lerCoord(div.querySelector(".street-name").value);
+  if(!c){el.textContent="";return}
+  let end=enderecoEmCache(c.lat,c.lon);
+  if(!end&&buscar&&navigator.onLine){el.textContent="🔎 Buscando endereço...";end=await enderecoDaCoord(c.lat,c.lon);}
+  el.textContent=end?`📌 ${end}`:"📌 Coordenada salva — o endereço aparece quando houver internet";
+}
+let resolvendoRotulos=false;
+async function resolverRotulosPendentes(){
+  if(resolvendoRotulos||!navigator.onLine)return;
+  resolvendoRotulos=true;
+  try{
+    for(const div of [...ruasEl.querySelectorAll(".street")]){
+      const c=lerCoord(div.querySelector(".street-name").value);
+      if(c&&!enderecoEmCache(c.lat,c.lon)){await atualizarRotuloRua(div,true);await esperar(1100);}
+    }
+  }finally{resolvendoRotulos=false}
+}
+
+document.getElementById("adicionarPosicao").onclick=async()=>{
+  const b=document.getElementById("adicionarPosicao");
+  b.disabled=true;b.textContent="📍 Obtendo sua posição...";
+  const g=await obterGPS();
+  b.disabled=false;b.textContent="📍 Adicionar minha posição aqui";
+  if(!g.ok)return alert(mensagemErroGPS(g.code));
+  const txt=`${g.lat.toFixed(6)}, ${g.lon.toFixed(6)}`;
+  const vazio=[...ruasEl.querySelectorAll(".street-name")].find(i=>!i.value.trim());
+  let div;
+  if(vazio){vazio.value=txt;div=vazio.closest(".street");}
+  else{criarRua(txt);div=ruasEl.lastElementChild;}
+  await atualizarRotuloRua(div,true);
+  if(g.precisao>50){
+    const el=div.querySelector(".street-endereco");
+    el.textContent+=` (precisão de ~${Math.round(g.precisao)} m)`;
+  }
+  div.scrollIntoView({behavior:"smooth",block:"center"});
+};
 criarRua();
 
 /* RUAS SALVAS / FAVORITAS */
@@ -392,7 +486,8 @@ function renderRuasSalvas(){
     wrap.className="chip-wrap";
     const b=document.createElement("button");
     b.className="chip";
-    b.textContent="★ "+nome;
+    const cf=lerCoord(nome);
+    b.textContent="★ "+(cf?(enderecoEmCache(cf.lat,cf.lon)?`📍 ${enderecoEmCache(cf.lat,cf.lon)}`:`📍 ${nome}`):nome);
     b.title="Adicionar esta rua à rota";
     b.onclick=()=>criarRua(nome);
     const del=document.createElement("button");
@@ -502,8 +597,15 @@ function rotuloRua(nome,ni,nf){
   return nome;
 }
 async function geocodificarRua(nome,cidade,ni,nf){
-  const m=nome.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
-  if(m)return {nome,lat:+m[1],lon:+m[2]};
+  const c=lerCoord(nome);
+  if(c){
+    const end=enderecoEmCache(c.lat,c.lon);
+    return {nome:end?`📍 ${end}`:`📍 Ponto ${c.lat.toFixed(5)}, ${c.lon.toFixed(5)}`,lat:c.lat,lon:c.lon,coord:true,pendente:!end,rede:false};
+  }
+  const chave=`${nome}|${ni}|${cidade}`.toLowerCase();
+  const cacheRuas=getCache("geo-ruas");
+  if(cacheRuas[chave])return {nome:rotuloRua(nome,ni,nf),lat:cacheRuas[chave][0],lon:cacheRuas[chave][1],rede:false};
+  if(!navigator.onLine)return null;
   let p=null;
   if(ni){
     p=await nominatim({street:`${ni} ${nome}`,city:cidade,country:"Brasil"});
@@ -515,8 +617,9 @@ async function geocodificarRua(nome,cidade,ni,nf){
     q+=", Brasil";
     p=await nominatim({q});
   }
-  if(!p)return null;
-  return {nome:rotuloRua(nome,ni,nf),lat:p.lat,lon:p.lon};
+  if(!p)return {falhou:true,rede:true};
+  const cr=getCache("geo-ruas");cr[chave]=[p.lat,p.lon];setCache("geo-ruas",cr);
+  return {nome:rotuloRua(nome,ni,nf),lat:p.lat,lon:p.lon,rede:true};
 }
 function haversine(a,b){
   const R=6371,la1=a.lat*Math.PI/180,la2=b.lat*Math.PI/180,dla=(b.lat-a.lat)*Math.PI/180,dlo=(b.lon-a.lon)*Math.PI/180;
@@ -551,11 +654,11 @@ document.getElementById("calcular").onclick=async()=>{
     for(let i=0;i<entradas.length;i++){
       botao.textContent=`🔎 Localizando ${i+1}/${entradas.length}...`;
       let p=null;
-      try{p=await geocodificarRua(entradas[i].nome,cidade,entradas[i].ni,entradas[i].nf)}catch(e){}
-      if(p)pontos.push(p);else naoEncontradas.push(entradas[i].nome);
-      if(i<entradas.length-1)await esperar(1100);
+      try{p=await geocodificarRua(entradas[i].nome,cidade,entradas[i].ni,entradas[i].nf)}catch(e){p={falhou:true,rede:true}}
+      if(p&&!p.falhou)pontos.push(p);else naoEncontradas.push(entradas[i].nome);
+      if(p&&p.rede&&i<entradas.length-1)await esperar(1100);
     }
-    if(!pontos.length)return alert("Nenhuma rua pôde ser localizada. Confira os nomes e a cidade.");
+    if(!pontos.length)return alert(navigator.onLine?"Nenhuma rua pôde ser localizada. Confira os nomes e a cidade.":"Sem internet: só é possível usar coordenadas, sua posição ou ruas que já foram buscadas antes.");
 
     let inicio=null,avisoTexto="";
     if(querGps){
@@ -582,13 +685,16 @@ document.getElementById("calcular").onclick=async()=>{
     }
 
     if(naoEncontradas.length){
-      avisoTexto+=(avisoTexto?"<br>":"")+`Não encontradas: <b>${naoEncontradas.map(escapeHtml).join(", ")}</b>.`;
+      avisoTexto+=(avisoTexto?"<br>":"")+(navigator.onLine
+        ?`Não encontradas: <b>${naoEncontradas.map(escapeHtml).join(", ")}</b>.`
+        :`Sem internet — ficaram de fora: <b>${naoEncontradas.map(escapeHtml).join(", ")}</b>. Calcule de novo quando o sinal voltar.`);
     }
     avisoGpsEl.innerHTML=avisoTexto;
     avisoGpsEl.style.display=avisoTexto?"block":"none";
 
     renderStops();resultadoEl.style.display="block";timestampEl.textContent=`Calculada em ${new Date().toLocaleString("pt-BR")}`;salvarUltimaRota();
     setTimeout(()=>renderMap(currentStops),250);
+    setTimeout(atualizarNomesPendentes,1500);
     resultadoEl.scrollIntoView({behavior:"smooth",block:"start"});
   }catch(e){alert("Ocorreu um erro ao calcular a rota.");}
   finally{botao.disabled=false;botao.textContent="🚗 Calcular melhor rota";}
@@ -629,15 +735,31 @@ function renderStops(){
 }
 
 /* MAPBOX */
-function iniciarMapa(){
+const MAPBOX_JS="https://api.mapbox.com/mapbox-gl-js/v3.30.0/mapbox-gl.js";
+const MAPBOX_CSS="https://api.mapbox.com/mapbox-gl-js/v3.30.0/mapbox-gl.css";
+function carregarMapbox(){
+  return new Promise(res=>{
+    if(window.mapboxgl)return res(true);
+    const l=document.createElement("link");l.rel="stylesheet";l.href=MAPBOX_CSS;document.head.appendChild(l);
+    const s=document.createElement("script");s.src=MAPBOX_JS;s.onload=()=>res(!!window.mapboxgl);s.onerror=()=>{s.remove();res(false)};
+    document.head.appendChild(s);
+  });
+}
+async function iniciarMapa(){
+  if(map)return;
   if(!MAPBOX_TOKEN.startsWith("pk.")){
     mapStatusEl.textContent="Token ainda não configurado";
     return;
+  }
+  if(!window.mapboxgl){
+    const ok=await carregarMapbox();
+    if(!ok){mapStatusEl.textContent="📴 O mapa aparece quando houver internet";return;}
   }
   try{
     mapboxgl.accessToken=MAPBOX_TOKEN;
     map=new mapboxgl.Map({container:"map",style:"mapbox://styles/mapbox/streets-v12",center:[-47.8567,-23.355],zoom:10});
     map.addControl(new mapboxgl.NavigationControl(),"top-right");
+    map.on("error",()=>{if(!navigator.onLine)mapStatusEl.textContent="📴 Sem internet — mapa parcial";});
     map.on("load",()=>{
       mapStatusEl.textContent="Mapa pronto";
       if(currentStops.length)renderMap(currentStops);
@@ -696,6 +818,7 @@ function renderMap(stops){
   map.addSource("rota-sequencia",{type:"geojson",data:{type:"Feature",geometry:{type:"LineString",coordinates:coords}}});
   map.addLayer({id:"rota-linha",type:"line",source:"rota-sequencia",layout:{"line-join":"round","line-cap":"round"},paint:{"line-color":"#126b3a","line-width":5,"line-opacity":.85}});
   map.fitBounds(bounds,{padding:45,maxZoom:15,duration:700});
+  if(!navigator.onLine){mapStatusEl.textContent=`${stops.length} pontos · 📴 trajeto quando voltar o sinal`;return;}
   mapStatusEl.textContent="🔎 Traçando trajeto pelas ruas...";
 
   buscarTrajeto(coords).then(t=>{
@@ -764,8 +887,116 @@ document.getElementById("compartilharApp").onclick=async()=>{
   window.open("https://wa.me/?text="+encodeURIComponent(texto+"\n"+appUrl),"_blank");
 };
 
+/* ==========================================================
+   BACKUP (exportar / importar)
+   ========================================================== */
+const CHAVES_BACKUP=["cidades-rota","ruas-rota","etapas-rota","ultima-rota","tema-rota","enderecos-coord","geo-ruas"];
+const infoBackupEl=document.getElementById("infoBackup");
+const textoInfoBackup=infoBackupEl.textContent;
+function mostrarUltimoBackup(){
+  const d=localStorage.getItem("ultimo-backup");
+  infoBackupEl.textContent=d?`${textoInfoBackup} Último backup: ${new Date(d).toLocaleString("pt-BR")}.`:textoInfoBackup;
+}
+document.getElementById("exportarBackup").onclick=async()=>{
+  const dados={};
+  CHAVES_BACKUP.forEach(k=>{const v=localStorage.getItem(k);if(v!==null){try{dados[k]=JSON.parse(v)}catch(e){dados[k]=v}}});
+  const pacote={app:"rota-do-dia",versao:1,criadoEm:new Date().toISOString(),dados};
+  const nomeArq=`rota-do-dia-backup-${hojeISO()}.json`;
+  const blob=new Blob([JSON.stringify(pacote,null,2)],{type:"application/json"});
+  let ok=false;
+  try{
+    const arq=new File([blob],nomeArq,{type:"application/json"});
+    if(navigator.canShare&&navigator.canShare({files:[arq]})){
+      await navigator.share({files:[arq],title:"Backup — Rota do Dia"});
+      ok=true;
+    }
+  }catch(e){if(e.name==="AbortError")return}
+  if(!ok){
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);a.download=nomeArq;
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+  }
+  localStorage.setItem("ultimo-backup",new Date().toISOString());
+  mostrarUltimoBackup();
+};
+document.getElementById("importarBackup").onclick=()=>document.getElementById("arquivoBackup").click();
+document.getElementById("arquivoBackup").onchange=async ev=>{
+  const f=ev.target.files[0];ev.target.value="";
+  if(!f)return;
+  let pacote;
+  try{pacote=JSON.parse(await f.text())}catch(e){return alert("Esse arquivo não é um backup válido.")}
+  if(!pacote||pacote.app!=="rota-do-dia"||!pacote.dados)return alert("Esse arquivo não é um backup do Rota do Dia.");
+  const d=pacote.dados;
+  const quando=pacote.criadoEm?new Date(pacote.criadoEm).toLocaleString("pt-BR"):"data desconhecida";
+  if(!confirm(`Importar o backup de ${quando}?\n\nOs favoritos, cidades e etapas do arquivo serão JUNTADOS aos que já estão no celular. Nada será apagado.`))return;
+  const juntarLista=(k)=>{
+    if(!Array.isArray(d[k]))return;
+    const atual=JSON.parse(localStorage.getItem(k)||"[]");
+    d[k].forEach(x=>{if(!atual.includes(x))atual.push(x)});
+    localStorage.setItem(k,JSON.stringify(atual));
+  };
+  juntarLista("cidades-rota");juntarLista("ruas-rota");
+  if(Array.isArray(d["etapas-rota"])){
+    const atual=getEtapas();
+    d["etapas-rota"].forEach(e=>{if(e&&e.nome&&!atual.some(a=>a.nome===e.nome&&JSON.stringify(a.ruas)===JSON.stringify(e.ruas)))atual.push(e)});
+    localStorage.setItem("etapas-rota",JSON.stringify(atual));
+  }
+  ["enderecos-coord","geo-ruas"].forEach(k=>{
+    if(d[k]&&typeof d[k]==="object")setCache(k,Object.assign(getCache(k),d[k]));
+  });
+  if(d["ultima-rota"]&&!localStorage.getItem("ultima-rota"))localStorage.setItem("ultima-rota",JSON.stringify(d["ultima-rota"]));
+  if(d["tema-rota"]&&!localStorage.getItem("tema-rota"))localStorage.setItem("tema-rota",d["tema-rota"]);
+  renderCidades();renderRuasSalvas();renderEtapas();aplicarTema();
+  if(!currentStops.length)carregarUltimaRota();
+  if(currentStops.length)renderMap(currentStops);
+  alert("Backup importado.");
+};
+mostrarUltimoBackup();
+
+/* ==========================================================
+   QUANDO A INTERNET VOLTA
+   Troca as coordenadas pelo nome da rua, redesenha o mapa
+   e o trajeto.
+   ========================================================== */
+let atualizandoNomes=false;
+async function atualizarNomesPendentes(){
+  if(atualizandoNomes||!navigator.onLine)return;
+  const pend=currentStops.filter(s=>s.coord&&s.pendente);
+  if(!pend.length)return;
+  atualizandoNomes=true;
+  let mudou=false;
+  try{
+    for(const s of pend){
+      const end=await enderecoDaCoord(s.lat,s.lon);
+      if(end){s.nome=`📍 ${end}`;s.pendente=false;mudou=true;}
+      await esperar(1100);
+    }
+  }finally{atualizandoNomes=false}
+  if(mudou){renderStops();salvarUltimaRota();renderMap(currentStops);renderRuasSalvas();}
+}
+const offlineBannerEl=document.getElementById("offlineBanner");
+function atualizarConexao(){
+  offlineBannerEl.classList.toggle("on",!navigator.onLine);
+}
+window.addEventListener("offline",atualizarConexao);
+window.addEventListener("online",async()=>{
+  atualizarConexao();
+  if(!map)await iniciarMapa();
+  else if(currentStops.length)renderMap(currentStops);
+  await atualizarNomesPendentes();
+  await resolverRotulosPendentes();
+});
+atualizarConexao();
+
+/* MODO OFFLINE (service worker) */
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+
 carregarUltimaRota();
 iniciarMapa();
+setTimeout(()=>{atualizarNomesPendentes().then(resolverRotulosPendentes)},2000);
 </script>
 </body>
 </html>
