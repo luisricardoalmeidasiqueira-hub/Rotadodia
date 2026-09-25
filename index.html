@@ -66,6 +66,8 @@ body.dark .aviso-gps{background:#2a2c30;color:#d4d7dc;border-color:#3a3c41}
 .stop-info{flex:1;min-width:0}.stop-name{font-size:14px;font-weight:bold;word-break:break-word}
 .stop-coords{font-size:10px;color:var(--muted);margin-top:2px}
 .stop-controls{display:flex;flex-direction:column;gap:3px}
+.stop-edit{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}
+.stop-edit button{padding:6px 10px;font-size:12px}
 .move{width:31px;height:27px;padding:0;background:var(--soft);color:var(--text)}
 .start-badge{display:inline-block;margin-top:5px;font-size:10px;background:#e6e8eb;color:var(--primary);border-radius:10px;padding:3px 7px}
 body.dark .start-badge{background:#2f3237;color:#d4d7dc}
@@ -239,6 +241,7 @@ body.dark .offline-banner{background:#2a2c30;color:#d4d7dc;border-color:#3a3c41}
       <div class="section-title" style="margin-bottom:2px">Ordem sugerida</div>
       <div class="timestamp" id="timestamp"></div>
     </div>
+    <button class="btn-danger btn-small" id="limparRota">🗑️ Limpar rota</button>
   </div>
   <div class="aviso-gps" id="avisoGps"></div>
   <div id="stopsList"></div>
@@ -771,6 +774,10 @@ function renderStops(){
         <div class="stop-name">${escapeHtml(stop.nome)}</div>
         <div class="stop-coords">${stop.lat.toFixed(6)}, ${stop.lon.toFixed(6)}</div>
         ${badge?`<span class="start-badge">${badge}</span>`:""}
+        <div class="stop-edit">
+          <button class="btn-secondary editar">✏️ Editar</button>
+          <button class="btn-danger remover">🗑️ Remover</button>
+        </div>
       </div>
       <div class="stop-controls">
         <button class="move up" ${upOff?"disabled":""}>▲</button>
@@ -786,9 +793,55 @@ function renderStops(){
       [currentStops[index],currentStops[index+1]]=[currentStops[index+1],currentStops[index]];
       renderStops();salvarUltimaRota();renderMap(currentStops);
     };
+    div.querySelector(".editar").onclick=()=>editarParada(index);
+    div.querySelector(".remover").onclick=()=>{
+      if(!confirm(`Remover "${stop.nome}" da rota?`))return;
+      currentStops.splice(index,1);
+      if(!currentStops.length)return limparRota(true);
+      renderStops();salvarUltimaRota();renderMap(currentStops);
+    };
     stopsListEl.appendChild(div);
   });
 }
+
+/* EDITAR / REMOVER / LIMPAR */
+async function editarParada(index){
+  const stop=currentStops[index];
+  if(stop.isStart){
+    const atualizar=confirm("Atualizar o ponto de partida para onde você está agora?\n\nOK = pegar a posição de novo pelo GPS\nCancelar = digitar as coordenadas");
+    if(atualizar){
+      const g=await obterGPS();
+      if(!g.ok)return alert(mensagemErroGPS(g.code));
+      stop.lat=g.lat;stop.lon=g.lon;
+      renderStops();salvarUltimaRota();renderMap(currentStops);
+      return;
+    }
+  }
+  const nomeAtual=stop.nome;
+  const nome=prompt("Nome do local:",nomeAtual);
+  if(nome===null)return;
+  const coordAtual=`${stop.lat.toFixed(6)}, ${stop.lon.toFixed(6)}`;
+  const coordTxt=prompt("Coordenadas (latitude, longitude):\nDeixe como está se não quiser mudar.",coordAtual);
+  if(coordTxt===null)return;
+  const c=lerCoord(coordTxt);
+  if(!c)return alert("Coordenadas inválidas. Use o formato: -23.3435, -47.8421");
+  if(Math.abs(c.lat)>90||Math.abs(c.lon)>180)return alert("Coordenadas fora do mapa. Confira os números.");
+  stop.nome=nome.trim()||nomeAtual;
+  if(coordTxt.trim()!==coordAtual){stop.lat=c.lat;stop.lon=c.lon;stop.pendente=false;}
+  renderStops();salvarUltimaRota();renderMap(currentStops);
+}
+function limparRota(semPerguntar){
+  if(!semPerguntar&&!confirm("Apagar a ordem sugerida e o mapa da rota?\n\nSuas ruas da lista, favoritos, medidores e etapas continuam salvos."))return;
+  currentStops=[];
+  localStorage.removeItem("ultima-rota");
+  stopsListEl.innerHTML="";
+  avisoGpsEl.style.display="none";
+  resultadoEl.style.display="none";
+  rotaReqId++;
+  if(map)limparMapa();
+  mapStatusEl.textContent=map?"Mapa pronto":mapStatusEl.textContent;
+}
+document.getElementById("limparRota").onclick=()=>limparRota(false);
 
 /* MAPBOX */
 const MAPBOX_JS="https://api.mapbox.com/mapbox-gl-js/v3.30.0/mapbox-gl.js";

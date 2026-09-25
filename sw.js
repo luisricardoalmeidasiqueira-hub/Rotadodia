@@ -1,6 +1,6 @@
 /* Rota do Dia — Faturamento: modo offline
    Troque a VERSAO sempre que publicar uma mudança grande. */
-const VERSAO="rota-do-dia-v7";
+const VERSAO="rota-do-dia-v8";
 const ARQUIVOS=["./","./index.html","./manifest.webmanifest","./app-icon.png"];
 const LIBS=[
   "https://api.mapbox.com/mapbox-gl-js/v3.30.0/mapbox-gl.css",
