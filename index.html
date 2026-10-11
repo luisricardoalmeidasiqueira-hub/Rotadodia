@@ -103,6 +103,64 @@ body.dark .offline-banner{background:#2a2c30;color:#d4d7dc;border-color:#3a3c41}
 .street-endereco{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.35}
 .street-endereco:empty{display:none}
 .theme{position:fixed;right:12px;bottom:12px;z-index:20;width:44px;height:44px;padding:0;border-radius:50%;background:var(--primary);color:#fff;box-shadow:var(--shadow)}
+
+/* ===== CARTÕES COM SETINHA ===== */
+.card.recolhivel{padding:0;overflow:hidden}
+.card-toggle{display:flex;align-items:center;gap:8px;width:100%;background:transparent;color:var(--text);border-radius:0;padding:11px 12px;text-align:left;font-size:14px;font-weight:bold}
+.card-toggle .seta{display:inline-block;width:14px;color:var(--muted);transition:transform .15s}
+.card.aberto .card-toggle .seta,.lembrete-mapa.aberto .card-toggle .seta{transform:rotate(90deg)}
+.lembrete-mapa.aberto .lembrete-corpo{display:block!important}
+.card-toggle .titulo{flex:1;min-width:0}
+.card-toggle .resumo{font-size:11px;font-weight:normal;color:var(--muted);max-width:50%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-body{display:none;padding:0 10px 10px}
+.card.aberto .card-body{display:block}
+.card-body > .section-title.oculto{display:none}
+/* ===== MODO COMPACTO (v9) ===== */
+.container{padding:8px}
+header{padding:10px 12px;border-radius:12px;margin-bottom:8px}
+header h1{font-size:17px}
+header p{font-size:11px;margin-top:2px}
+.header-actions{margin-top:8px;gap:6px}
+.header-actions button{padding:6px;font-size:11px}
+.card{padding:10px;margin-bottom:8px;border-radius:12px}
+.section-title{font-size:13px;margin-bottom:6px}
+input[type=text],input[type=date],input[type=number]{padding:8px 10px;font-size:14px;border-radius:8px;min-width:0}
+input[type=date]{-webkit-appearance:none;appearance:none;display:block;min-height:36px;text-align:left}
+input[type=date]::-webkit-date-and-time-value{text-align:left}
+button{padding:8px 10px;font-size:13px;border-radius:8px}
+.btn-small{padding:6px 8px;font-size:12px}
+.hint{font-size:11px;margin-top:5px;line-height:1.35}
+.street{padding:7px;margin-bottom:6px;border-radius:10px}
+.street-top{gap:5px;margin-bottom:5px}
+.street-number,.stop-number{width:24px;height:24px;font-size:11px}
+.street-bottom{gap:5px}
+.street-endereco{font-size:10px;margin-top:4px}
+.actions{gap:6px}
+.checkbox{font-size:12px}
+.stop{padding:7px;margin-top:6px;gap:7px;border-radius:10px}
+.stop-name{font-size:13px}
+.stop-coords{font-size:9px}
+.start-badge{font-size:9px;padding:2px 6px;margin-top:3px}
+.stop-edit{margin-top:5px;gap:5px}
+.stop-edit button{padding:4px 8px;font-size:11px}
+.move{width:28px;height:24px;font-size:11px}
+.chip{padding:5px 6px 5px 8px;font-size:11px}
+.chip-delete{padding:5px 7px;font-size:12px}
+.ponto{padding:7px;margin-top:6px;gap:7px}
+.ponto-titulo{font-size:13px}
+.ponto-linha{font-size:11px}
+.ponto-acoes button{padding:5px 7px;font-size:11px}
+.map-head strong{font-size:13px}
+#map{height:280px;border-radius:10px}
+.map-marker{width:26px;height:26px;font-size:11px;border-width:2px}
+.lembrete-mapa{padding:10px;border-radius:12px;margin-bottom:8px}
+.lembrete-mapa ol{font-size:12px;margin:4px 0 8px}
+.lembrete-mapa .btn-mapa{padding:9px;font-size:14px}
+.offline-banner,.aviso-gps{font-size:11px;padding:7px 9px}
+.help-list{font-size:12px;line-height:1.45}
+footer{font-size:10px;padding:10px 5px 64px}
+.app-versao{display:block;margin-top:3px;opacity:.8}
+.theme{width:38px;height:38px;font-size:15px;right:10px;bottom:10px}
 </style>
 
 <link rel="icon" type="image/png" sizes="512x512" href="app-icon.png">
@@ -125,7 +183,8 @@ body.dark .offline-banner{background:#2a2c30;color:#d4d7dc;border-color:#3a3c41}
 </header>
 
 <div class="lembrete-mapa" id="lembreteMapa">
-  <div class="section-title">🗺️ Hora de atualizar o mapa</div>
+  <button type="button" class="card-toggle" id="lembreteToggle" style="padding:0;background:transparent"><span class="seta">▸</span><span class="titulo">🗺️ Hora de atualizar o mapa</span></button>
+  <div class="lembrete-corpo" style="display:none;margin-top:8px">
   <div style="font-size:13px;line-height:1.45">Para o Google Maps funcionar <b>sem internet</b> na rua, o mapa precisa estar baixado e atualizado. Toque no botão abaixo e faça assim:</div>
   <ol>
     <li>Toque na sua <b>foto</b> (canto de cima).</li>
@@ -135,6 +194,7 @@ body.dark .offline-banner{background:#2a2c30;color:#d4d7dc;border-color:#3a3c41}
   </ol>
   <button class="btn-mapa" id="atualizarMapaBtn">🗺️ Atualizar mapa</button>
   <button class="btn-depois" id="lembrarDepoisBtn">Lembrar depois</button>
+  </div>
 </div>
 
 <div class="offline-banner" id="offlineBanner">📴 <b>Sem internet.</b> Você pode adicionar coordenadas e sua posição normalmente. O mapa, a busca de ruas novas e o trajeto voltam sozinhos quando o sinal voltar.</div>
@@ -264,7 +324,7 @@ body.dark .offline-banner{background:#2a2c30;color:#d4d7dc;border-color:#3a3c41}
   </div>
 </div>
 
-<footer>© 2026 Luís Ricardo de Almeida Siqueira — Todos os direitos reservados.</footer>
+<footer>© 2026 Luís Ricardo de Almeida Siqueira — Todos os direitos reservados.<span class="app-versao">Versão 11</span></footer>
 </div>
 
 <button class="theme" id="tema">🌙</button>
@@ -1161,6 +1221,7 @@ document.getElementById("lembrarDepoisBtn").onclick=()=>{
   lembreteMapaEl.classList.remove("on");
 };
 verificarLembreteMapa();
+document.getElementById("lembreteToggle").onclick=()=>lembreteMapaEl.classList.toggle("aberto");
 
 /* ==========================================================
    BACKUP (exportar / importar)
@@ -1280,7 +1341,82 @@ if("serviceWorker" in navigator){
   window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 }
 
+/* ==========================================================
+   CARTÕES COM SETINHA (abrir / fechar)
+   O app lembra quais cartões você deixou abertos.
+   ========================================================== */
+const CARTOES=[
+  {id:"dados",  achar:"#dataRota",       titulo:"📅 Data e cidade",            aberto:false},
+  {id:"ruas",   achar:"#ruas",           titulo:"🛣️ Ruas da rota",             aberto:false},
+  {id:"medidor",achar:"#buscaMedidor",   titulo:"🔢 Medidores e pontos salvos",aberto:false},
+  {id:"etapas", achar:"#salvarEtapa",    titulo:"📁 Etapas salvas",            aberto:false},
+  {id:"backup", achar:"#exportarBackup", titulo:"💾 Backup dos seus dados",    aberto:false},
+  {id:"calc",   achar:"#calcular",       titulo:"🚗 Calcular rota",            aberto:false},
+  {id:"ordem",  achar:"#stopsList",      titulo:"📋 Ordem sugerida",           aberto:false},
+  {id:"mapa",   achar:"#map",            titulo:"🗺️ Mapa da rota",             aberto:false},
+  {id:"acoes",  achar:"#abrirGoogle",    titulo:"🧭 Google Maps e compartilhar",aberto:false}
+];
+function getAbertos(){try{return JSON.parse(localStorage.getItem("cartoes-abertos")||"{}")}catch(e){return{}}}
+const cartaoEl={};
+function abrirCartao(id,abrir=true){
+  const c=cartaoEl[id];if(!c)return;
+  c.classList.toggle("aberto",abrir);
+  const a=getAbertos();a[id]=abrir;localStorage.setItem("cartoes-abertos",JSON.stringify(a));
+  if(id==="mapa"&&abrir&&map){setTimeout(()=>{map.resize();if(currentStops.length)renderMap(currentStops);},60);}
+}
+function atualizarResumos(){
+  const r=cartaoEl.dados&&cartaoEl.dados.querySelector(".resumo");
+  if(r){
+    const d=dataRotaEl.value?dataRotaEl.value.split("-").reverse().slice(0,2).join("/"):"";
+    r.textContent=[d,cidadeEl.value.trim()].filter(Boolean).join(" · ");
+  }
+  const rr=cartaoEl.ruas&&cartaoEl.ruas.querySelector(".resumo");
+  if(rr){const n=lerRuasDaTela().length;rr.textContent=n?`${n} rua(s)`:"";}
+  const ro=cartaoEl.ordem&&cartaoEl.ordem.querySelector(".resumo");
+  if(ro)ro.textContent=currentStops.length?`${currentStops.length} parada(s)`:"";
+}
+(function montarCartoes(){
+  const salvos=getAbertos();
+  CARTOES.forEach(cfg=>{
+    const alvo=document.querySelector(cfg.achar);if(!alvo)return;
+    const card=alvo.closest(".card");if(!card||card.classList.contains("recolhivel"))return;
+    const corpo=document.createElement("div");corpo.className="card-body";
+    while(card.firstChild)corpo.appendChild(card.firstChild);
+    const primeiro=corpo.querySelector(":scope > .section-title");
+    if(primeiro&&cfg.id!=="dados")primeiro.classList.add("oculto");
+    const t=corpo.querySelector(".result-head .section-title");if(t)t.classList.add("oculto");
+    const mh=corpo.querySelector(".map-head strong");if(mh)mh.style.display="none";
+    const btn=document.createElement("button");btn.type="button";btn.className="card-toggle";
+    btn.innerHTML=`<span class="seta">▸</span><span class="titulo">${cfg.titulo}</span><span class="resumo"></span>`;
+    btn.onclick=()=>abrirCartao(cfg.id,!card.classList.contains("aberto"));
+    card.classList.add("recolhivel");
+    card.appendChild(btn);card.appendChild(corpo);
+    card.classList.toggle("aberto",cfg.aberto);
+    cartaoEl[cfg.id]=card;
+  });
+  [dataRotaEl,cidadeEl].forEach(el=>el.addEventListener("input",atualizarResumos));
+  ruasEl.addEventListener("input",atualizarResumos);
+  new MutationObserver(atualizarResumos).observe(ruasEl,{childList:true});
+  new MutationObserver(atualizarResumos).observe(stopsListEl,{childList:true});
+  // Depois de calcular, abre a ordem, o mapa e o Google Maps
+  document.getElementById("calcular").addEventListener("click",()=>{
+    const obs=new MutationObserver(()=>{
+      if(currentStops.length){["ordem","mapa","acoes"].forEach(id=>abrirCartao(id,true));obs.disconnect();}
+    });
+    obs.observe(stopsListEl,{childList:true});
+    setTimeout(()=>obs.disconnect(),120000);
+  });
+  // "Ver no mapa" abre o cartão do mapa
+  const mostrarOrig=mostrarPontosNoMapa;
+  mostrarPontosNoMapa=function(lista){abrirCartao("mapa",true);setTimeout(()=>mostrarOrig(lista),120);};
+  // "➕ Rota" e "Adicionar minha posição" abrem o cartão das ruas
+  ["adicionarPosicao"].forEach(id=>{const b=document.getElementById(id);if(b)b.addEventListener("click",()=>abrirCartao("ruas",true));});
+  pontosListaEl.addEventListener("click",e=>{if(e.target.closest(".add"))abrirCartao("ruas",true);});
+  atualizarResumos();
+})();
+
 carregarUltimaRota();
+atualizarResumos();
 iniciarMapa();
 setTimeout(()=>{atualizarNomesPendentes().then(resolverRotulosPendentes).then(resolverPontosPendentes)},2000);
 </script>
